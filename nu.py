@@ -12,8 +12,8 @@ async def check_auth(message):
     """
     if message.from_user.id not in AUTH_USERS:
         await message.reply_text(
-            "⛔ **__ACCESS DENIED__** ⛔\n\n"
-            "**__You are not Authorized to use this Command. Only Admins and Auth Users are Authorized to use these Commands !!__**"
+            "⛔ **ACCESS DENIED** ⛔\n\n"
+            "__You are not Authorized to use these Command. Only Admins and Auth Users are Authorized to use these Commands !!__"
         )
         return False
     return True
@@ -29,15 +29,15 @@ async def start_command(client, message):
     user_name = message.from_user.first_name
     
     text = (
-        f"**__Hello {user_name}__**\n"
-        "**__I am Latest Advanced Keep-Alive__**\n"
-        "**__Monitor Bot, Coded by @MyselfNeon**\n"
-        f"**__I can Trigger and Monitor your Websites every {interval} Seconds ⏰.__**\n\n"
+        f"__Hello **{user_name}**__\n"
+        "__I am Latest Advanced Keep-Alive__\n"
+        "__Monitor Bot, Coded by **@MyselfNeon**__\n"
+        f"__I can Trigger and Monitor your Websites every **{interval}** Seconds ⏰.__\n\n"
         "**__My Commands :__**\n"
-        "**/add (url) - __Monitor a new URL__**\n"
-        "**/del (url) - __Delete an URL__**\n"
-        "**/check - __Manual Check Status__**\n"
-        "**/time - __Set Monitor Interval__**"
+        "/add (url) - __Monitor a new URL__\n"
+        "/del (url) - __Delete an URL__\n"
+        "/check - __Manual Check Status__\n"
+        "/time - __Set Monitor Interval__"
     )
     
     buttons = InlineKeyboardMarkup([
@@ -48,7 +48,6 @@ async def start_command(client, message):
     await message.reply_text(text, reply_markup=buttons)
 
 # --- CALLBACK HANDLERS (Navigation) ---
-# Note: Callbacks also need auth check if you want to prevent clicking buttons
 @Client.on_callback_query(filters.regex("^cb_"))
 async def cb_handler(client, query):
     # Optional: Check auth on button clicks too
