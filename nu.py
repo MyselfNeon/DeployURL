@@ -12,8 +12,8 @@ async def check_auth(message):
     """
     if message.from_user.id not in AUTH_USERS:
         await message.reply_text(
-            "⛔ **ACCESS DENIED** ⛔\n\n"
-            "You are not authorized to use this command. Only Admins and Auth Users are authorized to use the Commands !!"
+            "⛔ **__ACCESS DENIED__** ⛔\n\n"
+            "**__You are not Authorized to use this Command. Only Admins and Auth Users are Authorized to use these Commands !!__**"
         )
         return False
     return True
@@ -59,7 +59,7 @@ async def cb_handler(client, query):
     
     if data == "cb_all_bots":
         text = (
-            "🤖 **My Other Bots**\n\n"
+            "🤖 **__My Other Bots__**\n\n"
             "Here are some of the other bots and projects I have worked on.\n"
             "Check out the update channel for the latest news!"
         )
