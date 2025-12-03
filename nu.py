@@ -121,17 +121,17 @@ async def add_url_command(client, message):
         return
 
     if len(message.command) < 2:
-        return await message.reply_text("⚠️ Usage: `/add https://example.com`")
+        return await message.reply_text("⚠️ **__Usage:** /add https://example.com__")
     
     url = message.command[1]
     if not url.startswith("http"):
-        return await message.reply_text("⚠️ Invalid URL. Must start with http or https.")
+        return await message.reply_text("⚠️ **__Invalid URL.**\nMust start with http or https.__")
     
     if await db.is_url_exist(url):
-        return await message.reply_text("⚠️ URL is already being monitored.")
+        return await message.reply_text("⚠️ __URL is Already being Monitored.__")
     
     await db.add_url(url)
-    await message.reply_text(f"✅ Added to monitor: `{url}`")
+    await message.reply_text(f"✅ **__Added to Monitor :**\n– {url}__")
 
 # --- DELETE URL COMMAND ---
 @Client.on_message(filters.command("del") & filters.private)
@@ -140,16 +140,16 @@ async def delete_url_command(client, message):
         return
 
     if len(message.command) < 2:
-        return await message.reply_text("⚠️ Usage: `/del https://example.com`")
+        return await message.reply_text("⚠️ **__Usage:** /del https://example.com__")
     
     url = message.command[1]
     if not await db.is_url_exist(url):
-        return await message.reply_text("⚠️ This URL is not in the database.")
+        return await message.reply_text("⚠️ __This URL is not in the Database.__")
     
     await db.remove_url(url)
     if url in url_states:
         del url_states[url]
-    await message.reply_text(f"🗑 Removed from monitor: `{url}`")
+    await message.reply_text(f"🚮 **__Removed from Monitor__** : \n– __{url}__")
 
 # --- STATS COMMAND ---
 @Client.on_message(filters.command(["check", "stats"]) & filters.private)
@@ -157,12 +157,12 @@ async def stats_command(client, message):
     if not await check_auth(message):
         return
 
-    msg = await message.reply_text("🔄 Checking status of all services...")
+    msg = await message.reply_text("🔄 **__Checking status of all Services...__**")
     urls = await db.get_urls()
     
-    text = "📊 **Current Status Report**\n\n"
+    text = "📊 **__Current Status Report__**\n\n"
     if not urls:
-        text += "No URLs found in Database."
+        text += "__No URLs found in Database.__"
     else:
         async with aiohttp.ClientSession() as session:
             for url in urls:
@@ -174,7 +174,7 @@ async def stats_command(client, message):
             
     await msg.edit_text(text)
 
-# --- TIME COMMAND ---
+# --- Time Command ---
 @Client.on_message(filters.command("time") & filters.private)
 async def time_command(client, message):
     if not await check_auth(message):
@@ -184,7 +184,7 @@ async def time_command(client, message):
     buttons = InlineKeyboardMarkup([
         [InlineKeyboardButton("CHANGE TIME", callback_data="time_change")]
     ])
-    await message.reply_text(f"🕓 **Monitoring Interval**\nCurrent: **{current_interval}s**", reply_markup=buttons)
+    await message.reply_text(f"🕓 **__Monitoring Interval__**\➠ __Current Time : **{current_interval}s**__", reply_markup=buttons)
 
 @Client.on_callback_query(filters.regex("time_"))
 async def time_callback(client, callback_query):
