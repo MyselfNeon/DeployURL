@@ -41,8 +41,8 @@ async def start_command(client, message):
     )
     
     buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("All Bots", callback_data="cb_all_bots"),
-         InlineKeyboardButton("About Me", callback_data="cb_about_me")]
+        [InlineKeyboardButton("🤖 Aʟʟ Bᴏᴛs", callback_data="cb_all_bots"),
+         InlineKeyboardButton("😎 Aʙᴏᴜᴛ Mᴇ", callback_data="cb_about_me")]
     ])
     
     await message.reply_text(text, reply_markup=buttons)
@@ -64,8 +64,8 @@ async def cb_handler(client, query):
         )
         buttons = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("UPDATE CHANNEL", url="https://t.me/NeonFiles"),
-                InlineKeyboardButton("BACK", callback_data="cb_back")
+                InlineKeyboardButton("📝 Uᴘᴅᴀᴛᴇs", url="https://t.me/NeonFiles"),
+                InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="cb_back")
             ]
         ])
         await query.message.edit_text(text, reply_markup=buttons)
@@ -83,12 +83,12 @@ async def cb_handler(client, query):
         )
         buttons = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("SUPPORT", url="https://t.me/support"),
-                InlineKeyboardButton("SOURCE CODE", url="https://myselfneon.github.io/neon/")
+                InlineKeyboardButton("🫡 Sᴜᴘᴘᴏʀᴛ", url="https://t.me/support"),
+                InlineKeyboardButton("🛐 Sᴏᴜʀᴄᴇ Cᴏᴅᴇ", url="https://myselfneon.github.io/neon/")
             ],
             [
-                InlineKeyboardButton("DEVELOPER", url="https://t.me/myselfneon"),
-                InlineKeyboardButton("BACK", callback_data="cb_back")
+                InlineKeyboardButton("👨‍💻 Dᴇᴠᴇʟᴏᴘᴇʀ", url="https://t.me/myselfneon"),
+                InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="cb_back")
             ]
         ])
         await query.message.edit_text(text, reply_markup=buttons)
@@ -182,7 +182,7 @@ async def time_command(client, message):
 
     current_interval = await db.get_interval()
     buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("CHANGE TIME", callback_data="time_change")]
+        [InlineKeyboardButton("⏰ Cʜᴀɴɢᴇ Tɪᴍᴇ", callback_data="time_change")]
     ])
     await message.reply_text(f"🕓 **__Monitoring Interval__**\➠ __Current Time : **{current_interval}s**__", reply_markup=buttons)
 
