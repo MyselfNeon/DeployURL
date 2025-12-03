@@ -98,15 +98,15 @@ async def cb_handler(client, query):
         user_name = query.from_user.first_name
         
         text = (
-            f"‣ Hᴇʟʟᴏ {user_name} 🇮🇳\n"
-            "I ᴀᴍ Lᴀᴛᴇsᴛ Aᴅᴠᴀɴᴄᴇᴅ **Keep-Alive Monitor Bᴏᴛ**.\n"
-            "Cᴏᴅᴇᴅ & Dᴇᴠᴇʟᴏᴘᴇᴅ ʙʏ NᴇᴏɴAɴᴜʀᴀɢ.\n"
-            f"I ᴄᴀɴ **Trigger** ᴀɴᴅ **Monitor** Yᴏᴜʀ ᴡᴇʙsᴇʀᴠɪᴄᴇs ᴇᴠᴇʀʏ **{interval}** ѕᴇᴄᴏɴᴅs.\n\n"
-            "**Commands:**\n"
-            "/add `url` - Monitor a new URL\n"
-            "/del `url` - Delete a URL\n"
-            "/check - Manual check status\n"
-            "/time - Set monitor interval"
+            f"__Hello **{user_name}**__\n"
+            "__I am Latest Advanced Keep-Alive__\n"
+            "__Monitor Bot, Coded by **@MyselfNeon**__\n"
+            f"__I can Trigger and Monitor your Websites every **{interval}** Seconds ⏰.__\n\n"
+            "**__Commands:__**\n"
+            "/add (url) - __Monitor a new URL__\n"
+            "/del (url) - __Delete an URL__\n"
+            "/check - __Manual check Status__\n"
+            "/time - __Set monitor Interval__"
         )
         buttons = InlineKeyboardMarkup([
             [InlineKeyboardButton("All Bots", callback_data="cb_all_bots"),
