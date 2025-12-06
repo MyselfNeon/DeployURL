@@ -1,6 +1,8 @@
 # ------------------------------------------------
-# File Name: MyselfNeon/track.py
-# Description: Headers now managed by main.py Session.
+# File Name: Track.py
+# GitHub: https://github.com/MyselfNeon/
+# Telegram: https://t.me/MyelfNeon
+# Last Modified: 2025-10-21
 # ------------------------------------------------
 
 import asyncio
@@ -13,8 +15,7 @@ logger = logging.getLogger(__name__)
 
 async def get_soup(url, client):
     try:
-        # Headers are managed by the AsyncSession in main.py
-        # This ensures Client Hints match the browser version perfectly.
+        # Headers are managed by the AsyncSession
         response = await client.get(url, allow_redirects=True)
         response.raise_for_status()
         return await asyncio.to_thread(BeautifulSoup, response.content, 'html.parser')
@@ -76,7 +77,6 @@ async def check_user_status(http_client, bot):
         # --- LOG ACTIVITY ---
         if is_online:
             await db.log_activity(name)
-        # --------------------
 
         # Alert Logic
         state_key = f"user_status_{name}"
