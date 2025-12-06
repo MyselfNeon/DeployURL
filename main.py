@@ -1,8 +1,8 @@
 # ------------------------------------------------
-# File Name: main.py
-# Description: Proxy Removed.
-#              Features: Browser Rotation, Client Hints,
-#              Cookie Jar Retention, Smart Backoff.
+# File Name: Main.py
+# GitHub: https://github.com/MyselfNeon/
+# Telegram: https://t.me/MyelfNeon
+# Last Modified: 2025-10-21
 # ------------------------------------------------
 
 import asyncio
@@ -16,26 +16,23 @@ from pyrogram.types import Message
 from config import API_ID, API_HASH, BOT_TOKEN, MIN_CHECK_INTERVAL, MAX_CHECK_INTERVAL, PORT, OWNER_ID
 from app import start_web_server
 
-# Import Logic
 from MyselfNeon.track import check_user_status, check_forums
 from MyselfNeon.useless import register_useless_commands, RESTART_MSG_KEY
 from MyselfNeon.db import db
 
-# YOUR KEEP ALIVE URL HERE
+# ---Your Keep Alive Url Here---
 KEEP_ALIVE_URL = "https://website-monitor-ddy2.onrender.com/" 
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Global flag
 BOT_READY_MESSAGE_SENT = False
 
 # Supported Reactions
-REACTIONS = ["🤝", "👍", "⚡️", "🫡", "🔥", "😎", "✅"]
+REACTIONS = ["🤝", "👍", "⚡️", "🫡", "🔥", "😎"]
 
-# --- ADVANCED BROWSER CONFIGURATIONS ---
-# Maps specific browser versions to their correct Client Hints & Headers.
+# --- Advanced Browser Configurations ---
 BROWSER_CONFIGS = [
     {
         "impersonate": "chrome120",
@@ -95,7 +92,7 @@ async def verify_owner(message):
     if message.from_user.id == OWNER_ID: return True
 
     try:
-        # Access Denied Sticker (...jibHgQ)
+        # Access Denied Sticker
         m = await message.reply_sticker("CAACAgIAAxkBAAJF4WkjF7pMqaiigSJbxdN2p5iDrzjFAAJ-GgACglXYSXgCrotQHjibHgQ")
         await asyncio.sleep(1) 
         await m.delete()
@@ -111,7 +108,7 @@ async def verify_authorization(message):
     if await db.is_user_authorized(message.from_user.id): return True
 
     try:
-        # Access Denied Sticker (...jibHgQ)
+        # Access Denied Sticker
         m = await message.reply_sticker("CAACAgIAAxkBAAJF4WkjF7pMqaiigSJbxdN2p5iDrzjFAAJ-GgACglXYSXgCrotQHjibHgQ")
         await asyncio.sleep(1) 
         await m.delete() 
@@ -120,7 +117,7 @@ async def verify_authorization(message):
     await message.reply("⛔ **__ACCESS DENIED__** ⛔\n\n__You are not authorized to use this command.__")
     return False
 
-# --- ACTIVITY GRAPH COMMAND (OWNER ONLY) ---
+# --- Activity Graph ---
 @bot.on_message(filters.command("activity"))
 async def activity_cmd(client, message):
     if not await verify_owner(message): return
@@ -130,7 +127,6 @@ async def activity_cmd(client, message):
     
     target_name = " ".join(message.command[1:])
     
-    # Loading Sticker (...g7S2HgQ)
     tmp = await message.reply_sticker("CAACAgEAAxkBAAJHQWkqZs4YE4Oxlil7LNLgruuoGkkaAAItAgACpyMhRD1AMMntg7S2HgQ")
     
     logs = await db.get_activity_data(target_name)
@@ -139,7 +135,7 @@ async def activity_cmd(client, message):
         await tmp.delete()
         return await message.reply(f"📉 **__No activity data found for: {target_name}__**\n__Wait for them to come online so I can start logging!__")
 
-    # Group by Hour (IST is handled in DB)
+    # Group by Hour
     hours = {i: 0 for i in range(24)}
     for timestamp in logs:
         hours[timestamp.hour] += 1
@@ -168,7 +164,6 @@ async def activity_cmd(client, message):
     await tmp.delete()
 
 # --- Management Commands ---
-
 @bot.on_message(filters.command("add_user"))
 async def add_user_target(client, message):
     if not await verify_owner(message): return
@@ -257,7 +252,7 @@ async def list_targets(client, message):
     for a in auths: msg += f"- `{a}`\n"
     await message.reply(msg)
 
-# --- START COMMAND ---
+# --- Start Command ---
 @bot.on_message(filters.command("start"))
 async def start_cmd(client, message: Message):
     try: await message.react(emoji=random.choice(REACTIONS), big=True)
@@ -275,12 +270,11 @@ async def start_cmd(client, message: Message):
          reply_text = f"👋 **__Bot is Online !!__**\n\n**__The Chat ID for this {chat_type.upper()} is:__** `{message.chat.id}`"
     await message.reply(reply_text)
 
-# --- CHECK COMMAND ---
+# --- Check Command ---
 @bot.on_message(filters.command("check"))
 async def force_check(client, message):
     if not await verify_authorization(message): return
     
-    # Loading Sticker (...g7S2HgQ)
     tmp = await message.reply_sticker("CAACAgEAAxkBAAJHQWkqZs4YE4Oxlil7LNLgruuoGkkaAAItAgACpyMhRD1AMMntg7S2HgQ")
     
     try:
@@ -299,7 +293,7 @@ async def force_check(client, message):
         for name, info in user_status_data.items():
             status = info.get("status", "Unknown")
             
-            # --- TIME FIX LOGIC ---
+            # --- Time Fix Logic ---
             display_time = info.get("last_seen", "Unknown")
             
             if status != "Online":
@@ -308,7 +302,6 @@ async def force_check(client, message):
                     display_time = db_time.strftime("%d %b, %I:%M %p (IST)")
             else:
                 display_time = "Online Now"
-            # ----------------------
 
             emoji = "🟢" if status == "Online" else "🔴" if status == "Offline" else "❓"
             summary_parts.append(f"__• {name}: **{status}** {emoji}__\n   __Last seen: {display_time}__")
@@ -346,7 +339,7 @@ async def scheduler():
         BOT_READY_MESSAGE_SENT = True
             
     while True:
-        # 1. Pick a new browser identity for this session
+        # 1. Pick a new Browser identity for this session
         config = random.choice(BROWSER_CONFIGS)
         logger.info(f"Starting new session with: {config['impersonate']}")
         
@@ -354,7 +347,7 @@ async def scheduler():
         session_life_cycles = random.randint(5, 10)
 
         try:
-            # Create Session with Headers and Impersonation (NO PROXY)
+            # Create Session with Headers and Impersonation
             async with AsyncSession(
                 timeout=20.0, 
                 impersonate=config['impersonate'], 
@@ -370,8 +363,7 @@ async def scheduler():
                     
         except Exception as e:
             logger.error(f"Scheduler Session Error: {e}")
-            # --- SMART BACKOFF: COOL DOWN ON ERROR ---
-            # If we crashed (403/Connection Error), wait longer (60-120s)
+            # --- SMART BACKOFF: Cool Down On Error ---
             logger.warning("⚠️ Error detected. Cooling down for 60-120s...")
             await asyncio.sleep(random.randint(60, 120))
 
