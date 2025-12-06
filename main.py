@@ -1,427 +1,398 @@
-import logging
-import logging.config
+# ------------------------------------------------
+# File Name: main.py
+# Description: Proxy Removed.
+#              Features: Browser Rotation, Client Hints,
+#              Cookie Jar Retention, Smart Backoff.
+# ------------------------------------------------
 
-# Get logging configurations
-logging.config.fileConfig("logging.conf")
-logging.getLogger().setLevel(logging.INFO)
-logging.getLogger("pyrogram").setLevel(logging.WARNING)
+import asyncio
+import logging
+import random
+import aiohttp 
+from curl_cffi.requests import AsyncSession
+from pyrogram import Client, filters
+from pyrogram.types import Message
+
+from config import API_ID, API_HASH, BOT_TOKEN, MIN_CHECK_INTERVAL, MAX_CHECK_INTERVAL, PORT, OWNER_ID
+from app import start_web_server
+
+# Import Logic
+from MyselfNeon.track import check_user_status, check_forums
+from MyselfNeon.useless import register_useless_commands, RESTART_MSG_KEY
+from MyselfNeon.db import db
+
+# YOUR KEEP ALIVE URL HERE
+KEEP_ALIVE_URL = "https://website-monitor-ddy2.onrender.com/" 
+
+# Configure Logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-import os
-import re
-import time
+# Global flag
+BOT_READY_MESSAGE_SENT = False
 
-import requests
-from telegraph import Telegraph
-from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+# Supported Reactions
+REACTIONS = ["🤝", "👍", "⚡️", "🫡", "🔥", "😎", "✅"]
 
-from config import Config
-from utils import progress
+# --- ADVANCED BROWSER CONFIGURATIONS ---
+# Maps specific browser versions to their correct Client Hints & Headers.
+BROWSER_CONFIGS = [
+    {
+        "impersonate": "chrome120",
+        "headers": {
+            "Referer": "https://www.google.com/",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Upgrade-Insecure-Requests": "1",
+            "Cache-Control": "max-age=0",
+        }
+    },
+    {
+        "impersonate": "chrome110",
+        "headers": {
+            "Referer": "https://www.google.com/",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="110", "Google Chrome";v="110"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Upgrade-Insecure-Requests": "1",
+        }
+    },
+    {
+        "impersonate": "edge101",
+        "headers": {
+            "Referer": "https://www.bing.com/",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Sec-Ch-Ua": '" Not A;Brand";v="99", "Chromium";v="101", "Microsoft Edge";v="101"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+        }
+    },
+    {
+        "impersonate": "safari17_0",
+        "headers": {
+            "Referer": "https://www.google.com/",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Cache-Control": "max-age=0",
+            "Upgrade-Insecure-Requests": "1",
+        }
+    }
+]
 
-try:
-    import uvloop  # https://docs.pyrogram.org/topics/speedups#uvloop
-    uvloop.install()
-except ImportError:
-    pass
+# Initialize Pyrogram Client
+bot = Client(
+    "platinmods_bot",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN
+)
 
-class Bot(Client):  # pylint: disable=too-many-ancestors
-    """Telegram bot client for uploading photos and creating posts on Telegra.ph."""
-
-    def __init__(self):
-        """Initializes the bot with the provided configuration."""
-        super().__init__(
-            "telegraph",
-            bot_token=Config.BOT_TOKEN,
-            api_id=Config.API_ID,
-            api_hash=Config.API_HASH,
-        )
-
-    async def start(self):
-        """Starts the bot and prints the bot username."""
-        Config.validate()
-        await super().start()
-        logger.info("Bot started successfully at @%s", self.me.username)
-        logger.debug("Full bot info: %s", self.me)
-
-    async def stop(self, *args, **kwargs):
-        """Stops the bot and prints a stop message."""
-        await super().stop(*args, **kwargs)
-        logger.info("Bot session stopped gracefully.")
-
-bot = Bot()
-EMOJI_PATTERN = re.compile(r'<emoji id="\d+">')
-TITLE_PATTERN = re.compile(r"title:? (.*)", re.IGNORECASE)
-
-@bot.on_message(filters.command("start") & filters.incoming & filters.private)
-async def start_handlers(_: Bot, message: Message) -> None:
-    """Handles the /start command to provide a welcome message to the user."""
-    logger.debug("Recieced /start command from user %s", message.from_user.first_name)
-    await message.reply(
-        text=(
-            f"👋 **__Hello {message.from_user.mention}!__**\n\n"
-            "__Welcome to **Telegraph Uploader Bot__** 🌐\n\n"
-            "__With me, you can :__\n"
-            "📸 **__Host Images**\nSend Me Any Photo, And I'll Immediately Upload It To **Imgbb** Or **Envs.sh**, Providing You With A Direct, Shareable Link__\n"
-            "📝 **__Create Instant View Posts**\nSend me your Text, and I'll instantly convert it into a Beautifully formatted, Ad-free post on **Graph.org** (your Telegraph alternative)__\n\n"
-            "📌 **__Usage__**:\n"
-            "• __Send a **Photo** Get ImgBB/Envs.sh Link\n"
-            "• __Send a **Text** in the following format Get Graph.org post with Link\n\n"
-            "📝 **__Custom Title__**:\n"
-            "```txt\n"
-            "Title: {title}\n{content}\n"
-            "```\n\n"
-            "✅ **__Example__**:\n"
-            "```txt\n"
-            "Title: My First Graph.org Post\n"
-            "This is the content of my first post!\n\n"
-            "Here's a list of what I like:\n"
-            "- Programming 💻\n"
-            "- Reading 📚\n"
-            "- Traveling ✈️\n"
-            "- Music 🎵\n"
-            "```\n\n"
-            "🔗 **__About Graph.org__**:\n"
-            "__Graph.org is a Minimalist Publishing tool (Alternative to Telegra.ph, which is Banned in India) that allows you to Share Beautifully formatted Posts with Text, Images, and more.__\n\n"
-            "🖼️ **__About ImgBB & Envs.sh__**:\n"
-            "- **__ImgBB__**\n__Permanent Image Hosting with fast Sharing Links.__\n"
-            "- **__Envs.sh__**\n__Temporary Hosting (⚠️ Files may be Deleted after 30 Days).__\n\n"
-            "🌟 **__Get Started Now!__** \nJust send a Photo or formatted Text message and let me handle the rest 🚀"
-        ),
-        disable_web_page_preview=True,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "👨‍💻 My Creator", url="https://t.me/MyselfNeon"
-                    ),
-                    InlineKeyboardButton(
-                        "🛠 Source Code",
-                        url="https://myselfneon.github.io/neon/",
-                    ),
-                ],
-                [
-                    InlineKeyboardButton(
-                        "📌 Updates", url="https://t.me/NeonFiles"
-                    ),
-                    InlineKeyboardButton("❤️ Support", url="https://t.me/+o1s-8MppL2syYTI9"),
-                ],
-            ]
-        ),
-        quote=True,
-    )
-
-
-def upload_file(file_path):
-    """
-    Uploads file to ImgBB (if API key is set).
-    Falls back to envs.sh if ImgBB fails or API key missing.
-    """
-    imgbb_key = getattr(Config, "IMGBB_API_KEY", None)
-    logger.debug("Attempting to upload file: %s", file_path)
-
-    # 1. Try ImgBB first (if key exists)
-    if imgbb_key:
-        logger.debug("ImgBB API key found. Uploading to ImgBB...")
-        try:
-            with open(file_path, "rb") as f:
-                files = {"image": f}
-                response = requests.post(
-                    "https://api.imgbb.com/1/upload",
-                    params={"key": imgbb_key},
-                    files=files,
-                    timeout=15,
-                )
-
-            if response.ok:
-                data = response.json()["data"]
-                return {
-                    "provider": "imgbb",
-                    "url": data["url"],
-                    "delete_url": data.get("delete_url"),
-                }
-            else:
-                logger.warning("ImgBB upload failed: %s", response.text)
-
-        except Exception as e:
-            logger.error("Error uploading to ImgBB: %s", e, exc_info=True)
-
-    # 2. Fallback: use envs.sh
-    logger.debug("Falling back to envs.sh upload...")
-    try:
-        with open(file_path, "rb") as f:
-            files = {"file": f}
-            response = requests.post("https://envs.sh", files=files, timeout=15)
-
-        if response.ok:
-            url = response.text.strip()
-            logger.info("File uploaded to envs.sh: %s", url)
-            return {"provider": "envs.sh", "url": url}
-        else:
-            logger.error("envs.sh upload failed: %s", response.text)
-
-    except Exception as e:
-        logger.critical("All upload methods failed: %s", e, exc_info=True)
-
-@bot.on_message(filters.photo & filters.incoming & filters.private)
-async def photo_handler(_: Bot, message: Message) -> None:
-    """Handles incoming photo messages by uploading them to cloud providers."""
+# --- 1. Owner Verification Helper (Strict) ---
+async def verify_owner(message):
+    if not message.from_user: return False
+    if message.from_user.id == OWNER_ID: return True
 
     try:
-        logger.debug("Received photo from user_id=%s", message.from_user.id)
-        msg = await message.reply_text("Processing....⏳", quote=True)
+        # Access Denied Sticker (...jibHgQ)
+        m = await message.reply_sticker("CAACAgIAAxkBAAJF4WkjF7pMqaiigSJbxdN2p5iDrzjFAAJ-GgACglXYSXgCrotQHjibHgQ")
+        await asyncio.sleep(1) 
+        await m.delete()
+    except: pass
 
-        location = f"./{message.from_user.id}{time.time()}/"
-        start_time = time.time()
-        logger.debug("Downloading photo to %s", location)
+    await message.reply("⛔ **__ACCESS DENIED__** ⛔\n\n__Only the Bot Owner can use this command.__")
+    return False
 
-        file = await message.download(
-            location, progress=progress, progress_args=(msg, start_time)
-        )
-        logger.info("Photo downloaded: %s", file)
-
-        await msg.edit(
-            "📥 **Download Complete!**\n\n"
-            "☁️ Now uploading your file to the **cloud provider**..."
-        )
-
-        media_data = upload_file(file)
-        if not media_data:
-            logger.warning("Upload failed for file: %s", file)
-            await msg.edit(
-                "⚠️ Oops! We couldn’t upload your media file.\nPlease try again in a while."
-            )
-            return
-
-        else:
-            buttons = [[InlineKeyboardButton("🌐 View Image", url=media_data["url"])]]
-
-            text = (
-                f"[\u200B]({media_data['url']})✅ **Upload Successful!**\n\n"
-                f"🖼️ [Click here to view the image]({media_data['url']})\n\n"
-                f"📡 **Provider:** `{media_data['provider']}`\n\n"
-                f"🔗 **Direct Link:** `{media_data['url']}`\n\n"
-            )
-
-            if media_data["provider"].lower() == "envs.sh":
-                text += (
-                    "\n⚠️ **Note:**\n\nFiles uploaded to **Envs.sh** may be automatically deleted "
-                    "after **30 days**. This is **not** a permanent storage option.\n\n"
-                )
-
-            if media_data.get("delete_url"):
-                buttons.append(
-                    [
-                        InlineKeyboardButton(
-                            "🗑️ Delete Image", url=media_data["delete_url"]
-                        )
-                    ]
-                )
-
-            await msg.edit(
-                text,
-                reply_markup=InlineKeyboardMarkup(buttons),
-                disable_web_page_preview=False,
-            )
-
-    except FileNotFoundError:
-        pass
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error(e)
-        await msg.edit(f"**Error:**\n{e}")
-    finally:
-        if os.path.exists(file):
-            os.remove(file)
-            os.rmdir(location)
-
-@bot.on_message(filters.text & filters.incoming & filters.private)
-async def text_handler(_: Bot, message: Message) -> None:
-    """Handles text messages by creating Graph.org posts."""
+# --- 2. General Authorization Helper (Owner + Auth Users) ---
+async def verify_authorization(message):
+    if not message.from_user: return False
+    if message.from_user.id == OWNER_ID: return True
+    if await db.is_user_authorized(message.from_user.id): return True
 
     try:
-        logger.debug("Received text message from user_id=%s", message.from_user.id)
-        msg = await message.reply_text("Processing....⏳", quote=True)
+        # Access Denied Sticker (...jibHgQ)
+        m = await message.reply_sticker("CAACAgIAAxkBAAJF4WkjF7pMqaiigSJbxdN2p5iDrzjFAAJ-GgACglXYSXgCrotQHjibHgQ")
+        await asyncio.sleep(1) 
+        await m.delete() 
+    except: pass
 
-        short_name = "Ns Bots"
-        logger.debug("Creating Telegraph account with short_name=%s", short_name)
+    await message.reply("⛔ **__ACCESS DENIED__** ⛔\n\n__You are not authorized to use this command.__")
+    return False
 
-        user = Telegraph(domain=Config.DOMAIN).create_account(short_name=short_name)
-        access_token = user.get("access_token")
+# --- ACTIVITY GRAPH COMMAND (OWNER ONLY) ---
+@bot.on_message(filters.command("activity"))
+async def activity_cmd(client, message):
+    if not await verify_owner(message): return
 
-        logger.debug("Access token acquired for Telegraph API")
-        content = message.text.html
-        content = re.sub(EMOJI_PATTERN, "", content).replace("</emoji>", "")
-
-        title = re.findall(TITLE_PATTERN, content)
-        if len(title) != 0:
-            title = title[0]
-            logger.debug("Custom title extracted: %s", title)
-            content = "\n".join(content.splitlines()[1:])
-        else:
-            title = message.from_user.first_name
-            logger.debug("No custom title found. Using user name: %s", title)
-
-        content = content.replace("\n", "<br>")
-        author_url = (
-            f"https://telegram.dog/{message.from_user.username}"
-            if message.from_user.id
-            else None
-        )
-
-        response = Telegraph(
-            domain=Config.DOMAIN, access_token=access_token
-        ).create_page(
-            title=title,
-            html_content=content,
-            author_name=str(message.from_user.first_name),
-            author_url=author_url,
-        )
-        path = response["path"]
-        await msg.edit(f"https://{Config.DOMAIN}/{path}")
-    except ValueError as e:
-        logger.error(e)
-        await msg.edit("Unable to generate instant view link.")
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error(e)
-        await msg.edit(f"**Error:**\n{e}")
-
-# ----------------------
-# Web server for Render port detection & Keep Alive
-# ----------------------
-if __name__ == "__main__":
-    import asyncio
-    from aiohttp import web
-    import os
-    import aiohttp
+    if len(message.command) < 2:
+        return await message.reply("⚠️ Usage: /activity <User Name>")
     
-    async def handle_root(request):
-        return web.Response(
-            text="""
-            <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>@MyselfNeon</title>
-  <style>
-    body {
-      background-color: black;
-      margin: 0;
-      height: 100vh;
-      font-family: 'Brush Script MT', cursive;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
-      text-align: center;
-      overflow: hidden;
-      padding-top: 20vh;
-    }
+    target_name = " ".join(message.command[1:])
+    
+    # Loading Sticker (...g7S2HgQ)
+    tmp = await message.reply_sticker("CAACAgEAAxkBAAJHQWkqZs4YE4Oxlil7LNLgruuoGkkaAAItAgACpyMhRD1AMMntg7S2HgQ")
+    
+    logs = await db.get_activity_data(target_name)
+    
+    if not logs:
+        await tmp.delete()
+        return await message.reply(f"📉 **__No activity data found for: {target_name}__**\n__Wait for them to come online so I can start logging!__")
 
-    /* Added avatar + neon cyan glow */
-    .avatar {
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      margin-bottom: 25px;
-      box-shadow:
-        0 0 8px #00eaff,
-        0 0 15px #00eaff,
-        0 0 30px #00eaff;
-    }
+    # Group by Hour (IST is handled in DB)
+    hours = {i: 0 for i in range(24)}
+    for timestamp in logs:
+        hours[timestamp.hour] += 1
 
-    a {
-      text-decoration: none;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: auto;
-      width: 100%;
-      cursor: pointer;
-    }
+    max_val = max(hours.values()) if hours.values() else 1
+    graph_lines = []
+    
+    graph_lines.append(f"📊 **__Activity Graph: {target_name}__**\n")
+    graph_lines.append("`Hour  Activity Lvl`")
+    
+    BAR_CHAR = "■"
+    
+    for h in range(24):
+        count = hours[h]
+        if count == 0: continue 
+        bar_len = int((count / max_val) * 10)
+        bar_len = max(1, bar_len)
+        time_str = f"{h:02d}:00"
+        bar_str = BAR_CHAR * bar_len
+        graph_lines.append(f"`{time_str} {bar_str}`")
 
-    h1 {
-      font-size: clamp(2.5rem, 8vw, 7rem);
-      letter-spacing: 2px;
-      margin-bottom: 0.3rem;
-      animation: redToBlue 2s infinite alternate ease-in-out;
-      text-shadow:
-        0 0 1px currentColor,
-        0 0 3px currentColor;
-    }
+    if len(graph_lines) == 2:
+        graph_lines.append("__Data recorded but spread too thin to graph yet.__")
 
-    h2 {
-      font-size: clamp(1.8rem, 6vw, 4.8rem);
-      letter-spacing: 2px;
-      color: #39FF14;
-      text-shadow:
-        0 0 1px #39FF14,
-        0 0 3px #00FF00;
-    }
+    await client.send_message(message.chat.id, "\n".join(graph_lines))
+    await tmp.delete()
 
-    @keyframes redToBlue {
-      0% { color: #FF2400; }
-      50% { color: #FF1493; }
-      100% { color: #00BFFF; }
-    }
-  </style>
-</head>
-<body>
+# --- Management Commands ---
 
-  <img class="avatar" src="https://avatars.githubusercontent.com/u/194442566?v=4">
+@bot.on_message(filters.command("add_user"))
+async def add_user_target(client, message):
+    if not await verify_owner(message): return
+    args = message.command
+    
+    if len(args) < 3: 
+        return await message.reply("⚠️ Usage: /add_user <Name> <URL>")
+        
+    url = args[-1]
+    name = " ".join(args[1:-1])
+    await db.add_target("user", name, url, "span.userTitle")
+    await message.reply(f"✅ **Tracking Added:** {name}")
 
-  <a href="https://t.me/nTelegraph_Bot" target="_blank">
-    <h1>Telegraph-Bot</h1>
-    <h2>Coded By @MyselfNeon</h2>
-  </a>
+@bot.on_message(filters.command("del_user"))
+async def del_user_target(client, message):
+    if not await verify_owner(message): return
+    
+    if len(message.command) < 2: 
+        return await message.reply("⚠️ Usage: /del_user <Name>")
+        
+    name = " ".join(message.command[1:])
+    if await db.remove_target(name): await message.reply(f"🗑 **Deleted User Target:** {name}")
+    else: await message.reply(f"❌ Could not find user: {name}")
 
-</body>
-</html>
-            """,
-            content_type="text/html"
-        )
+@bot.on_message(filters.command("add_forum"))
+async def add_forum_target(client, message):
+    if not await verify_owner(message): return
+    args = message.command
+    
+    if len(args) < 3: 
+        return await message.reply("⚠️ Usage: /add_forum <Name> <URL>")
+        
+    url = args[-1]
+    name = " ".join(args[1:-1])
+    await db.add_target("forum", name, url)
+    await message.reply(f"✅ **Forum Added:** {name}")
 
-    async def start_web_server():
-        app = web.Application()
-        app.add_routes([web.get("/", handle_root)])
-        runner = web.AppRunner(app)
-        await runner.setup()
-        port = int(os.environ.get("PORT", 8080))
-        site = web.TCPSite(runner, "0.0.0.0", port)
-        await site.start()
-        print(f"Web server running on port {port}")
+@bot.on_message(filters.command("del_forum"))
+async def del_forum_target(client, message):
+    if not await verify_owner(message): return
+    
+    if len(message.command) < 2: 
+        return await message.reply("⚠️ Usage: /del_forum <Name>")
+        
+    name = " ".join(message.command[1:])
+    if await db.remove_target(name): await message.reply(f"🗑 **Deleted Forum Target:** {name}")
+    else: await message.reply(f"❌ Could not find forum: {name}")
 
-    # ------------------- Keep-Alive Function -------------------
-    async def keep_alive():
-        """Send a request every 300 seconds to keep the bot alive (if required)."""
-        # Changed to Config.KEEP_ALIVE_URL
-        if not Config.KEEP_ALIVE_URL:
-            logging.warning("KEEP_ALIVE_URL not set — skipping keep-alive task.")
-            return
+@bot.on_message(filters.command("auth"))
+async def auth_user_cmd(client, message):
+    if not await verify_owner(message): return
+    
+    if len(message.command) < 2: 
+        return await message.reply("⚠️ Usage: /auth <User ID>")
+        
+    try:
+        uid = int(message.command[1])
+        await db.add_auth_user(uid)
+        await message.reply(f"🔓 **User {uid} Authorized.**")
+    except ValueError: await message.reply("❌ User ID must be a number.")
 
-        async with aiohttp.ClientSession() as session:
-            while True:
-                try:
-                    # Changed to Config.KEEP_ALIVE_URL
-                    async with session.get(Config.KEEP_ALIVE_URL) as resp:
-                        if resp.status == 200:
-                            logging.info("✅ Keep-alive ping successful.")
-                        else:
-                            logging.warning(f"⚠️ Keep-alive returned status {resp.status}")
-                except Exception as e:
-                    logging.error(f"❌ Keep-alive request failed: {e}")
-                await asyncio.sleep(300)
+@bot.on_message(filters.command("unauth"))
+async def unauth_user_cmd(client, message):
+    if not await verify_owner(message): return
+    
+    if len(message.command) < 2: 
+        return await message.reply("⚠️ Usage: /unauth <User ID>")
+        
+    try:
+        uid = int(message.command[1])
+        await db.remove_auth_user(uid)
+        await message.reply(f"🔒 **User {uid} Removed.**")
+    except ValueError: await message.reply("❌ User ID must be a number.")
+
+@bot.on_message(filters.command("list"))
+async def list_targets(client, message):
+    if not await verify_owner(message): return
+    users = await db.get_targets("user")
+    forums = await db.get_targets("forum")
+    auths = await db.get_all_auth_users()
+    msg = "**📊 __Current Configuration__**\n\n**👤 Users to Track:**\n"
+    for u in users: msg += f"- {u['_id']}\n"
+    msg += "\n**📚 Forums to Track:**\n"
+    for f in forums: msg += f"- {f['_id']}\n"
+    msg += "\n**🔓 Authorized IDs:**\n"
+    for a in auths: msg += f"- `{a}`\n"
+    await message.reply(msg)
+
+# --- START COMMAND ---
+@bot.on_message(filters.command("start"))
+async def start_cmd(client, message: Message):
+    try: await message.react(emoji=random.choice(REACTIONS), big=True)
+    except: pass
+    try:
+        m = await message.reply_sticker("CAACAgIAAxkBAAJF62kjGL73G1GeWXTazcwPE0kEwIwfAAKOFQACJU3BSY8WTX7r0TbzHgQ")
+        await asyncio.sleep(1)
+        await m.delete()
+    except: pass
+    
+    chat_type = message.chat.type.name.lower()
+    if chat_type == 'private':
+        reply_text = f"👋 **__Bot is Online !!__**\n\n__**Your Unique User ID is:__** `{message.chat.id}`\n\n**__Action Required: Send this ID to the Owner to get authorized.__**"
+    else:
+         reply_text = f"👋 **__Bot is Online !!__**\n\n**__The Chat ID for this {chat_type.upper()} is:__** `{message.chat.id}`"
+    await message.reply(reply_text)
+
+# --- CHECK COMMAND ---
+@bot.on_message(filters.command("check"))
+async def force_check(client, message):
+    if not await verify_authorization(message): return
+    
+    # Loading Sticker (...g7S2HgQ)
+    tmp = await message.reply_sticker("CAACAgEAAxkBAAJHQWkqZs4YE4Oxlil7LNLgruuoGkkaAAItAgACpyMhRD1AMMntg7S2HgQ")
+    
+    try:
+        config = random.choice(BROWSER_CONFIGS)
+        
+        async with AsyncSession(
+            timeout=20.0, 
+            impersonate=config['impersonate'], 
+            headers=config['headers']
+        ) as http_client:
+            user_status_data = await check_user_status(http_client, client)
+            forum_counts = await check_forums(http_client, client)
+        
+        summary_parts = ["✅ **__Manual Check Completed__**\n", "👤 **__User Status__**"]
+        
+        for name, info in user_status_data.items():
+            status = info.get("status", "Unknown")
+            
+            # --- TIME FIX LOGIC ---
+            display_time = info.get("last_seen", "Unknown")
+            
+            if status != "Online":
+                db_time = await db.get_last_seen(name)
+                if db_time:
+                    display_time = db_time.strftime("%d %b, %I:%M %p (IST)")
+            else:
+                display_time = "Online Now"
+            # ----------------------
+
+            emoji = "🟢" if status == "Online" else "🔴" if status == "Offline" else "❓"
+            summary_parts.append(f"__• {name}: **{status}** {emoji}__\n   __Last seen: {display_time}__")
+        
+        summary_parts.append("\n📚 **__Forum Thread Counts__**")
+        for forum, count in forum_counts.items():
+            summary_parts.append(f"__• {forum}: **{count} threads__**")
+        
+        await client.send_message(message.chat.id, "\n".join(summary_parts))
+        await tmp.delete()
+    
+    except Exception as e:
+        logger.error(f"Error during force check: {e}")
+        await message.reply(f"❌ **__Check failed.__**\n\n__{e}__")
+
+# --- Scheduler ---
+async def scheduler():
+    global BOT_READY_MESSAGE_SENT
+    while not bot.is_connected:
+        logger.info("Scheduler waiting for Telegram client to start...")
+        await asyncio.sleep(5)
+        
+    if not BOT_READY_MESSAGE_SENT:
+        restart_info = await db.get_state(RESTART_MSG_KEY)
+        if restart_info:
+            try:
+                await bot.delete_messages(restart_info['chat_id'], restart_info['message_id'])
+                await db.set_state(RESTART_MSG_KEY, None)
+            except: pass
+        recipients = set(await db.get_all_auth_users())
+        recipients.add(OWNER_ID)
+        for uid in recipients:
+            try: await bot.send_message(uid, "✅ **__Bot Online & Monitoring__**")
+            except: pass
+        BOT_READY_MESSAGE_SENT = True
+            
+    while True:
+        # 1. Pick a new browser identity for this session
+        config = random.choice(BROWSER_CONFIGS)
+        logger.info(f"Starting new session with: {config['impersonate']}")
+        
+        # 2. RETENTION: Decide how long to keep this session (5 to 10 checks)
+        session_life_cycles = random.randint(5, 10)
+
+        try:
+            # Create Session with Headers and Impersonation (NO PROXY)
+            async with AsyncSession(
+                timeout=20.0, 
+                impersonate=config['impersonate'], 
+                headers=config['headers']
+            ) as http_client:
                 
-    # Start web server in background
+                for i in range(session_life_cycles):
+                    await check_user_status(http_client, bot)
+                    await check_forums(http_client, bot)
+                    
+                    # Sleep between checks inside the same session
+                    await asyncio.sleep(random.randint(MIN_CHECK_INTERVAL, MAX_CHECK_INTERVAL))
+                    
+        except Exception as e:
+            logger.error(f"Scheduler Session Error: {e}")
+            # --- SMART BACKOFF: COOL DOWN ON ERROR ---
+            # If we crashed (403/Connection Error), wait longer (60-120s)
+            logger.warning("⚠️ Error detected. Cooling down for 60-120s...")
+            await asyncio.sleep(random.randint(60, 120))
+
+# --- Keep-Alive ---
+async def keep_alive():
+    if not KEEP_ALIVE_URL: return
+    async with aiohttp.ClientSession() as session:
+        while True:
+            try:
+                async with session.get(KEEP_ALIVE_URL) as resp:
+                    if resp.status != 200: logger.warning(f"Keep-alive status {resp.status}")
+            except Exception as e: logger.error(f"Keep-alive failed: {e}")
+            await asyncio.sleep(300)
+
+if __name__ == "__main__":
+    logger.info(f"Starting Web Server on port {PORT}")
+    start_web_server(PORT)
+    logger.info("Registering Bot Plugins...")
+    register_useless_commands(bot, verify_authorization)
+    logger.info("Starting Telegram Bot...")
     loop = asyncio.get_event_loop()
-    loop.create_task(start_web_server())
-
-    # Start keep-alive if KEEP_ALIVE_URL is defined
-    # Changed to Config.KEEP_ALIVE_URL
-    if Config.KEEP_ALIVE_URL:
-        loop.create_task(keep_alive())
-        logging.info("🌐 Keep-alive task started.")
-
-    # Run bot (this blocks and keeps it alive)
+    loop.create_task(scheduler())
+    if KEEP_ALIVE_URL: loop.create_task(keep_alive())
     bot.run()

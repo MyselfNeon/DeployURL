@@ -1,0 +1,8 @@
+aiohttp
+pyrofork
+TgCrypto-pyrofork
+curl_cffi
+beautifulsoup4
+flask
+python-dotenv
+motor
