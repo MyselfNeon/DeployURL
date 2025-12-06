@@ -1,6 +1,8 @@
 # ------------------------------------------------
-# File Name: MyselfNeon/db.py
-# Description: Database with IST Support & 7-Day History
+# File Name: App.py
+# GitHub: https://github.com/MyselfNeon/
+# Telegram: https://t.me/MyelfNeon
+# Last Modified: 2025-10-21
 # ------------------------------------------------
 
 import motor.motor_asyncio
@@ -10,7 +12,7 @@ import datetime
 
 logger = logging.getLogger(__name__)
 
-# --- DEFINE IST TIMEZONE (UTC + 5:30) ---
+# --- Define IST Timezone (UTC + 5:30) ---
 IST = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
 
 class Database:
