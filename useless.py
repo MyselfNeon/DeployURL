@@ -1,5 +1,8 @@
 # ------------------------------------------------
-# File Name: MyselfNeon/useless.py
+# File Name: Useless.py
+# GitHub: https://github.com/MyselfNeon/
+# Telegram: https://t.me/MyelfNeon
+# Last Modified: 2025-10-21
 # ------------------------------------------------
 
 import os
@@ -27,7 +30,7 @@ def register_useless_commands(bot, verify_auth_func):
         # --- STRICT SECURITY CHECK ---
         if message.from_user.id != OWNER_ID:
             try:
-                # 1. Send Sticker (Updated ID)
+                # 1. Send Sticker
                 m = await message.reply_sticker("CAACAgIAAxkBAAJF4WkjF7pMqaiigSJbxdN2p5iDrzjFAAJ-GgACglXYSXgCrotQHjibHgQ")
                 await asyncio.sleep(1)
                 await m.delete()
@@ -36,7 +39,6 @@ def register_useless_commands(bot, verify_auth_func):
             # 2. Send Text
             await message.reply("⛔ **__ACCESS DENIED__** ⛔\n\n__Only the Bot Owner can restart the server.__")
             return
-        # -----------------------------
 
         # Send "Restarting" message
         restart_message = await message.reply_text("🔄 **__Restarting Bot...__**\n\n__Reloading scripts and reconnecting...__")
@@ -44,7 +46,7 @@ def register_useless_commands(bot, verify_auth_func):
         try:
             logger.info(f"Owner {message.from_user.id} triggered bot restart.")
             
-            # Save the message ID to DB so main.py can delete it on startup
+            # Save the message ID to DB
             await db.set_state(RESTART_MSG_KEY, {
                 "chat_id": restart_message.chat.id,
                 "message_id": restart_message.id,
