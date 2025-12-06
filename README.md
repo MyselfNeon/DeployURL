@@ -1,90 +1,78 @@
-## *Website Monitor Bot* 🌐
+## 🌐 Website Monitor Bot
 
-*A fully automated monitoring bot for Websites built using Pyrogram, httpx, aiohttp, Flask, and asynchronous scraping with BeautifulSoup.*
+A fully automated monitoring bot for websites built using **Pyrogram**, **curl_cffi**, **Motor (MongoDB)**, **Flask**, and **asynchronous scraping** via BeautifulSoup.  
+Designed for tracking user status, monitoring forum threads, and detecting changes — all with real-time Telegram alerts.
 
----
+## ✨ Features
+- User online/offline tracking  
+- New forum thread detection  
+- Removed thread detection  
+- MongoDB support for persistent targets  
+- Add/remove targets dynamically through Telegram  
+- Manual `/check` command with summary  
+- Background scheduler with randomized intervals  
+- Keep-alive support for Render/Railway  
+- Chrome-like fetching using curl_cffi  
 
-### ✨ *Features*
+## 🧩 How It Works
+1. Fetches target URLs with curl_cffi (Chrome impersonation)  
+2. Parses data using BeautifulSoup  
+3. Compares scraped data with MongoDB entries  
+4. Detects status changes & new/removed threads  
+5. Sends Telegram alerts to authorized users  
+6. Runs continuously using async scheduler + Flask keep-alive  
 
-- *User Online/Offline tracking*  
-- *New forum thread detection*  
-- *Removed thread detection*  
-- *Manual `/check` command with summary*  
-- *Background scheduler*  
-- *Keep-alive support for Render/Railway*  
-- *Thread‑safe persistent state tracking*
-
----
-
-### 🧩 *How It Works*
-
-*The bot continuously:*  
-*1. Fetches URLs using async HTTP clients  
-2. Parses pages with BeautifulSoup  
-3. Detects user status changes and new/removed threads  
-4. Sends Telegram alerts  
-5. Stores in `custom.json`  
-6. Runs forever using a scheduler + keep-alive pings*  
-
----
-
-### 🚀 *Installation*
-
+## 🚀 Installation
 ```bash
-git clone https://github.com/MyselfNeon/Platinmods
-cd Platinmods
+git clone https://github.com/MyselfNeon/Website-Monitor-neon
+cd Website-Monitor-neon
 pip install -r requirements.txt
 ```
 
----
+## ⚙️ Configuration
+Create a `.env` file or set these environment variables:
 
-### ⚙️ *Configuration*
+```
+API_ID = 12345
+API_HASH = "your_telegram_hash"
+BOT_TOKEN = "your_bot_token"
 
-```python
-API_ID = 123
-API_HASH = "your_hash"
-BOT_TOKEN = "your_token"
+OWNER_ID = 123456789
+DB_URI = "mongodb+srv://..."
+DB_NAME = "PMT-Testing"
 
-NOTIFICATION_CHAT_ID = 123456789
-CHECK_INTERVAL = 120
-
-USER_TARGETS = [
-    {"name": "Neon", "url": "https://platinmods.com/user/neon"}
-]
-
-FORUM_TARGETS = {
-    "Mod Menu": "https://platinmods.com/forums/android-mod-menu"
-}
+# Optional
+MIN_CHECK_INTERVAL = 8
+MAX_CHECK_INTERVAL = 12
+PORT = 8080
 ```
 
----
-
-### ▶️ *Running the Bot*
-
+## ▶️ Running the Bot
 ```bash
 python main.py
 ```
 
----
+## 🧪 Commands
 
-### 🧪 *Commands*
+### General
+- `/start` — Check bot status & get your ID  
+- `/check` — Manually run a check + get summary  
 
-**- `/start` *Shows your Chat ID***.  
-**- `/check` *manual check + summary.***
+### Admin / Management
+- `/add_user <Name> <URL>` — Add a user to monitor  
+- `/del_user <Name>` — Remove a tracked user  
+- `/add_forum <Name> <URL>` — Add a forum section  
+- `/del_forum <Name>` — Remove a forum section  
+- `/list` — Show all tracked users/forums & authorized users  
+- `/auth <ID>` — Authorize a user to receive alerts  
+- `/unauth <ID>` — Revoke authorization  
+- `/restart` — Restart the bot (Owner only)  
 
----
+## 🌐 Deployment (Render / Railway / Replit)
+1. Set the `KEEP_ALIVE_URL` inside `main.py`  
+2. Add environment variables to the platform  
+3. Deploy normally  
+4. Bot stays awake using the Flask background task  
 
-### 🌐 *Deployment*
-
-### *Render / Railway / Replit*
-
-***1. Set `KEEP_ALIVE_URL`  
-2. Add environment variables  
-3. Deploy  
-4. Bot stays awake using keep-alive task***  
-
----
-
-## ❤️ *Author*
-
-***Neon [MyselfNeon](https://t.me/myselfneon)***
+## ❤️ Author
+**Neon** — https://github.com/MyselfNeon
