@@ -1,38 +1,40 @@
 # ------------------------------------------------
-# File Name: Main.py
-# GitHub: https://github.com/MyselfNeon/
-# Telegram: https://t.me/MyelfNeon
-# Last Modified: 2025-10-21
+# File Name: main.py
+# Description: Core Logic (Session, Loop, Checks)
 # ------------------------------------------------
 
 import asyncio
 import logging
 import random
+import datetime 
 import aiohttp 
 from curl_cffi.requests import AsyncSession
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-from config import API_ID, API_HASH, BOT_TOKEN, MIN_CHECK_INTERVAL, MAX_CHECK_INTERVAL, PORT, OWNER_ID
+# UPDATED IMPORT: OWNER_IDS
+from config import API_ID, API_HASH, BOT_TOKEN, MIN_CHECK_INTERVAL, MAX_CHECK_INTERVAL, PORT, OWNER_IDS
 from app import start_web_server
 
+# Import Logic
 from MyselfNeon.track import check_user_status, check_forums
 from MyselfNeon.useless import register_useless_commands, RESTART_MSG_KEY
 from MyselfNeon.db import db
 
-# ---Your Keep Alive Url Here---
+# YOUR KEEP ALIVE URL HERE
 KEEP_ALIVE_URL = "https://website-monitor-ddy2.onrender.com/" 
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Global flag
 BOT_READY_MESSAGE_SENT = False
 
 # Supported Reactions
-REACTIONS = ["🤝", "👍", "⚡️", "🫡", "🔥", "😎"]
+REACTIONS = ["🤝", "👍", "⚡️", "🫡", "🔥", "😎", "✅"]
 
-# --- Advanced Browser Configurations ---
+# --- ADVANCED BROWSER CONFIGURATIONS ---
 BROWSER_CONFIGS = [
     {
         "impersonate": "chrome120",
@@ -86,29 +88,15 @@ bot = Client(
     bot_token=BOT_TOKEN
 )
 
-# --- 1. Owner Verification Helper (Strict) ---
-async def verify_owner(message):
-    if not message.from_user: return False
-    if message.from_user.id == OWNER_ID: return True
-
-    try:
-        # Access Denied Sticker
-        m = await message.reply_sticker("CAACAgIAAxkBAAJF4WkjF7pMqaiigSJbxdN2p5iDrzjFAAJ-GgACglXYSXgCrotQHjibHgQ")
-        await asyncio.sleep(1) 
-        await m.delete()
-    except: pass
-
-    await message.reply("⛔ **__ACCESS DENIED__** ⛔\n\n__Only the Bot Owner can use this command.__")
-    return False
-
-# --- 2. General Authorization Helper (Owner + Auth Users) ---
+# --- General Authorization Helper (Owner + Auth Users) ---
 async def verify_authorization(message):
     if not message.from_user: return False
-    if message.from_user.id == OWNER_ID: return True
+    # CHECK SET OF IDS
+    if message.from_user.id in OWNER_IDS: return True
     if await db.is_user_authorized(message.from_user.id): return True
 
     try:
-        # Access Denied Sticker
+        # Access Denied Sticker 
         m = await message.reply_sticker("CAACAgIAAxkBAAJF4WkjF7pMqaiigSJbxdN2p5iDrzjFAAJ-GgACglXYSXgCrotQHjibHgQ")
         await asyncio.sleep(1) 
         await m.delete() 
@@ -117,142 +105,7 @@ async def verify_authorization(message):
     await message.reply("⛔ **__ACCESS DENIED__** ⛔\n\n__You are not authorized to use this command.__")
     return False
 
-# --- Activity Graph ---
-@bot.on_message(filters.command("activity"))
-async def activity_cmd(client, message):
-    if not await verify_owner(message): return
-
-    if len(message.command) < 2:
-        return await message.reply("⚠️ Usage: /activity <User Name>")
-    
-    target_name = " ".join(message.command[1:])
-    
-    tmp = await message.reply_sticker("CAACAgEAAxkBAAJHQWkqZs4YE4Oxlil7LNLgruuoGkkaAAItAgACpyMhRD1AMMntg7S2HgQ")
-    
-    logs = await db.get_activity_data(target_name)
-    
-    if not logs:
-        await tmp.delete()
-        return await message.reply(f"📉 **__No activity data found for: {target_name}__**\n__Wait for them to come online so I can start logging!__")
-
-    # Group by Hour
-    hours = {i: 0 for i in range(24)}
-    for timestamp in logs:
-        hours[timestamp.hour] += 1
-
-    max_val = max(hours.values()) if hours.values() else 1
-    graph_lines = []
-    
-    graph_lines.append(f"📊 **__Activity Graph: {target_name}__**\n")
-    graph_lines.append("`Hour  Activity Lvl`")
-    
-    BAR_CHAR = "■"
-    
-    for h in range(24):
-        count = hours[h]
-        if count == 0: continue 
-        bar_len = int((count / max_val) * 10)
-        bar_len = max(1, bar_len)
-        time_str = f"{h:02d}:00"
-        bar_str = BAR_CHAR * bar_len
-        graph_lines.append(f"`{time_str} {bar_str}`")
-
-    if len(graph_lines) == 2:
-        graph_lines.append("__Data recorded but spread too thin to graph yet.__")
-
-    await client.send_message(message.chat.id, "\n".join(graph_lines))
-    await tmp.delete()
-
-# --- Management Commands ---
-@bot.on_message(filters.command("add_user"))
-async def add_user_target(client, message):
-    if not await verify_owner(message): return
-    args = message.command
-    
-    if len(args) < 3: 
-        return await message.reply("⚠️ Usage: /add_user <Name> <URL>")
-        
-    url = args[-1]
-    name = " ".join(args[1:-1])
-    await db.add_target("user", name, url, "span.userTitle")
-    await message.reply(f"✅ **Tracking Added:** {name}")
-
-@bot.on_message(filters.command("del_user"))
-async def del_user_target(client, message):
-    if not await verify_owner(message): return
-    
-    if len(message.command) < 2: 
-        return await message.reply("⚠️ Usage: /del_user <Name>")
-        
-    name = " ".join(message.command[1:])
-    if await db.remove_target(name): await message.reply(f"🗑 **Deleted User Target:** {name}")
-    else: await message.reply(f"❌ Could not find user: {name}")
-
-@bot.on_message(filters.command("add_forum"))
-async def add_forum_target(client, message):
-    if not await verify_owner(message): return
-    args = message.command
-    
-    if len(args) < 3: 
-        return await message.reply("⚠️ Usage: /add_forum <Name> <URL>")
-        
-    url = args[-1]
-    name = " ".join(args[1:-1])
-    await db.add_target("forum", name, url)
-    await message.reply(f"✅ **Forum Added:** {name}")
-
-@bot.on_message(filters.command("del_forum"))
-async def del_forum_target(client, message):
-    if not await verify_owner(message): return
-    
-    if len(message.command) < 2: 
-        return await message.reply("⚠️ Usage: /del_forum <Name>")
-        
-    name = " ".join(message.command[1:])
-    if await db.remove_target(name): await message.reply(f"🗑 **Deleted Forum Target:** {name}")
-    else: await message.reply(f"❌ Could not find forum: {name}")
-
-@bot.on_message(filters.command("auth"))
-async def auth_user_cmd(client, message):
-    if not await verify_owner(message): return
-    
-    if len(message.command) < 2: 
-        return await message.reply("⚠️ Usage: /auth <User ID>")
-        
-    try:
-        uid = int(message.command[1])
-        await db.add_auth_user(uid)
-        await message.reply(f"🔓 **User {uid} Authorized.**")
-    except ValueError: await message.reply("❌ User ID must be a number.")
-
-@bot.on_message(filters.command("unauth"))
-async def unauth_user_cmd(client, message):
-    if not await verify_owner(message): return
-    
-    if len(message.command) < 2: 
-        return await message.reply("⚠️ Usage: /unauth <User ID>")
-        
-    try:
-        uid = int(message.command[1])
-        await db.remove_auth_user(uid)
-        await message.reply(f"🔒 **User {uid} Removed.**")
-    except ValueError: await message.reply("❌ User ID must be a number.")
-
-@bot.on_message(filters.command("list"))
-async def list_targets(client, message):
-    if not await verify_owner(message): return
-    users = await db.get_targets("user")
-    forums = await db.get_targets("forum")
-    auths = await db.get_all_auth_users()
-    msg = "**📊 __Current Configuration__**\n\n**👤 Users to Track:**\n"
-    for u in users: msg += f"- {u['_id']}\n"
-    msg += "\n**📚 Forums to Track:**\n"
-    for f in forums: msg += f"- {f['_id']}\n"
-    msg += "\n**🔓 Authorized IDs:**\n"
-    for a in auths: msg += f"- `{a}`\n"
-    await message.reply(msg)
-
-# --- Start Command ---
+# --- START COMMAND ---
 @bot.on_message(filters.command("start"))
 async def start_cmd(client, message: Message):
     try: await message.react(emoji=random.choice(REACTIONS), big=True)
@@ -270,11 +123,12 @@ async def start_cmd(client, message: Message):
          reply_text = f"👋 **__Bot is Online !!__**\n\n**__The Chat ID for this {chat_type.upper()} is:__** `{message.chat.id}`"
     await message.reply(reply_text)
 
-# --- Check Command ---
+# --- CHECK COMMAND ---
 @bot.on_message(filters.command("check"))
 async def force_check(client, message):
     if not await verify_authorization(message): return
     
+    # Loading Sticker
     tmp = await message.reply_sticker("CAACAgEAAxkBAAJHQWkqZs4YE4Oxlil7LNLgruuoGkkaAAItAgACpyMhRD1AMMntg7S2HgQ")
     
     try:
@@ -293,15 +147,31 @@ async def force_check(client, message):
         for name, info in user_status_data.items():
             status = info.get("status", "Unknown")
             
-            # --- Time Fix Logic ---
+            # --- TIME FIX LOGIC (Strict IST Conversion) ---
             display_time = info.get("last_seen", "Unknown")
             
             if status != "Online":
                 db_time = await db.get_last_seen(name)
                 if db_time:
-                    display_time = db_time.strftime("%d %b, %I:%M %p (IST)")
+                    try:
+                        # 1. Ensure db_time is treated as UTC (Mongo Default)
+                        if db_time.tzinfo is None:
+                            utc_time = db_time.replace(tzinfo=datetime.timezone.utc)
+                        else:
+                            utc_time = db_time.astimezone(datetime.timezone.utc)
+
+                        # 2. Convert to IST (UTC + 5:30)
+                        ist_tz = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+                        ist_time = utc_time.astimezone(ist_tz)
+                        
+                        # 3. Format
+                        display_time = ist_time.strftime("%d %b, %I:%M %p (IST)")
+                    except Exception as time_err:
+                        logger.error(f"Time conversion error: {time_err}")
+                        display_time = str(db_time) # Fallback
             else:
                 display_time = "Online Now"
+            # -------------------------------------------------
 
             emoji = "🟢" if status == "Online" else "🔴" if status == "Offline" else "❓"
             summary_parts.append(f"__• {name}: **{status}** {emoji}__\n   __Last seen: {display_time}__")
@@ -331,15 +201,18 @@ async def scheduler():
                 await bot.delete_messages(restart_info['chat_id'], restart_info['message_id'])
                 await db.set_state(RESTART_MSG_KEY, None)
             except: pass
+            
+        # NOTIFY ALL OWNERS + AUTH USERS
         recipients = set(await db.get_all_auth_users())
-        recipients.add(OWNER_ID)
+        recipients.update(OWNER_IDS)
+        
         for uid in recipients:
             try: await bot.send_message(uid, "✅ **__Bot Online & Monitoring__**")
             except: pass
         BOT_READY_MESSAGE_SENT = True
             
     while True:
-        # 1. Pick a new Browser identity for this session
+        # 1. Pick a new browser identity for this session
         config = random.choice(BROWSER_CONFIGS)
         logger.info(f"Starting new session with: {config['impersonate']}")
         
@@ -347,7 +220,7 @@ async def scheduler():
         session_life_cycles = random.randint(5, 10)
 
         try:
-            # Create Session with Headers and Impersonation
+            # Create Session with Headers and Impersonation (NO PROXY)
             async with AsyncSession(
                 timeout=20.0, 
                 impersonate=config['impersonate'], 
@@ -363,7 +236,8 @@ async def scheduler():
                     
         except Exception as e:
             logger.error(f"Scheduler Session Error: {e}")
-            # --- SMART BACKOFF: Cool Down On Error ---
+            # --- SMART BACKOFF: COOL DOWN ON ERROR ---
+            # If we crashed (403/Connection Error), wait longer (60-120s)
             logger.warning("⚠️ Error detected. Cooling down for 60-120s...")
             await asyncio.sleep(random.randint(60, 120))
 
@@ -382,7 +256,8 @@ if __name__ == "__main__":
     logger.info(f"Starting Web Server on port {PORT}")
     start_web_server(PORT)
     logger.info("Registering Bot Plugins...")
-    register_useless_commands(bot, verify_authorization)
+    # Register the commands moved to useless.py
+    register_useless_commands(bot)
     logger.info("Starting Telegram Bot...")
     loop = asyncio.get_event_loop()
     loop.create_task(scheduler())

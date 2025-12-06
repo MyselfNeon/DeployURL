@@ -1,21 +1,20 @@
 # ------------------------------------------------
-# File Name: Track.py
-# GitHub: https://github.com/MyselfNeon/
-# Telegram: https://t.me/MyelfNeon
-# Last Modified: 2025-10-21
+# File Name: MyselfNeon/track.py
+# Description: Headers now managed by main.py Session.
 # ------------------------------------------------
 
 import asyncio
 import logging
 from bs4 import BeautifulSoup
-from config import OWNER_ID 
+from config import OWNER_IDS # Updated Import
 from MyselfNeon.db import db
 
 logger = logging.getLogger(__name__)
 
 async def get_soup(url, client):
     try:
-        # Headers are managed by the AsyncSession
+        # Headers are managed by the AsyncSession in main.py
+        # This ensures Client Hints match the browser version perfectly.
         response = await client.get(url, allow_redirects=True)
         response.raise_for_status()
         return await asyncio.to_thread(BeautifulSoup, response.content, 'html.parser')
@@ -26,7 +25,9 @@ async def get_soup(url, client):
 async def broadcast_message(bot, text, disable_preview=False):
     auth_users = await db.get_all_auth_users()
     recipients = set(auth_users)
-    recipients.add(OWNER_ID)
+    
+    # Add all owners to the recipient list
+    recipients.update(OWNER_IDS)
 
     sent_messages = []
     for user_id in recipients:
@@ -77,6 +78,7 @@ async def check_user_status(http_client, bot):
         # --- LOG ACTIVITY ---
         if is_online:
             await db.log_activity(name)
+        # --------------------
 
         # Alert Logic
         state_key = f"user_status_{name}"
