@@ -287,7 +287,7 @@ class TaskManager:
 
         await msg.edit(f"**__📤 Uploading...__**\n`{width}x{height}`")
         
-        caption = f"**🎬 {task['filename']}**\n**📦 Size:** `{human_readable(os.path.getsize(file_path))}`"
+        caption = f"**__🎬 {task['filename']}__**\n**__📦 Size:** {human_readable(os.path.getsize(file_path))}__"
         
         try:
             if is_video and width and height:
@@ -312,16 +312,16 @@ class TaskManager:
                     thumb=thumb, 
                     progress=upload_progress
                 )
-            await msg.edit(f"**__✅ Completed!__**\n`{task['filename']}`")
+            await msg.edit(f"**__✅ Completed !__**\n`{task['filename']}`")
         except Exception:
             # Fallback if send_video crashes
             try:
                 await client.send_document(
                     task["chat_id"], document=file_path, caption=caption, progress=upload_progress
                 )
-                await msg.edit("**✅ Completed (Fallback)!**")
+                await msg.edit("**__✅ Completed (Fallback) !__**")
             except:
-                await msg.edit("**❌ Upload Failed.**")
+                await msg.edit("**__❌ Upload Failed.__**")
 
     async def update_progress(self, message, task, current, total, stage):
         now = time.time()
@@ -340,7 +340,7 @@ class TaskManager:
             eta_str = "Live"
         else:
             prog_bar = f"{get_progressbar(current, total)} `{percent:.1f}%`"
-            size_str = f"**📦 Size:** `{human_readable(current)} / {human_readable(total)}`"
+            size_str = f"**__📦 Size:** {human_readable(current)} / {human_readable(total)}__"
             eta_str = time_formatter(eta)
 
         text = (
@@ -348,9 +348,9 @@ class TaskManager:
             f"**File:** `{task.get('filename', 'Unknown')}`\n"
             f"**{prog_bar}**\n\n"
             f"{size_str}\n"
-            f"**⚡ Speed:** `{human_readable(speed)}/s`\n"
-            f"**⏳ ETA:** `{eta_str}`\n\n"
-            f"**🚫 Cancel:** /cancel_{task['id']}"
+            f"**__⚡ Speed:** {human_readable(speed)}/s__\n"
+            f"**__⏳ ETA:** {eta_str}__\n\n"
+            f"**__❌ Cancel:** /cancel_{task['id']}__"
         )
         try: await message.edit(text)
         except: pass
