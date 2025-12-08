@@ -65,8 +65,7 @@ async def get_filename_from_headers(response, url):
     except: pass
     return f"QuantumDL_{int(time.time())}"
 
-# ================= METADATA & FFMPEG ENGINES =================
-
+# --- Metadata & Ffmpeg Engines ---
 async def get_video_attributes(file_path):
     """
     Scans video to get exact Width/Height/Duration.
@@ -74,7 +73,7 @@ async def get_video_attributes(file_path):
     """
     width, height, duration = 1280, 720, 0
     try:
-        # Uses ffprobe (provided by static-ffmpeg on Render)
+        # Uses ffprobe (provided by static-ffmpeg)
         cmd = [
             "ffprobe", "-v", "error",
             "-select_streams", "v:0",
@@ -110,8 +109,7 @@ async def generate_thumbnail(video_path):
     except: pass
     return None
 
-# ================= TASK MANAGER =================
-
+# --- Task Manager ---
 class TaskManager:
     def __init__(self):
         self.active_tasks = {}
@@ -140,7 +138,7 @@ class TaskManager:
             "last_edit": 0
         }
 
-        msg = await message.reply(f"**⚡ Added to Queue...**\n`{url}`", quote=True)
+        msg = await message.reply(f"**__⚡ Added to Queue...__**\n`{url}`", quote=True)
         self.active_tasks[task_id]["message"] = msg
         asyncio.create_task(self.execute_task(client, task_id))
 
@@ -159,7 +157,7 @@ class TaskManager:
             file_path = None
             
             try:
-                # --- 1. DOWNLOAD PHASE ---
+                # --- 1. Download Phase ---
                 is_stream = any(x in url.lower() for x in [".m3u8", ".m3u", ".mpd"])
                 
                 if is_stream:
@@ -169,9 +167,9 @@ class TaskManager:
 
                 if not file_path: raise Exception("Download failed.")
 
-                # --- 2. METADATA PHASE (Ratio Fix) ---
+                # --- 2. Metadata Phase (Ratio) ---
                 task["status"] = "checking"
-                await msg.edit("**📏 Checking Dimensions...**")
+                await msg.edit("**__📏 Checking Dimensions...__**")
                 
                 w, h, dur = 0, 0, 0
                 is_video = False
@@ -184,11 +182,11 @@ class TaskManager:
                 if is_video:
                     w, h, dur = await get_video_attributes(file_path)
 
-                # --- 3. UPLOAD PHASE ---
+                # --- 3. Upload Phase ---
                 await self.upload_file(client, task, file_path, w, h, dur, is_video)
 
             except Exception as e:
-                await msg.edit(f"**❌ Error:** `{str(e)}`")
+                await msg.edit(f"**__❌ Error:__** `{str(e)}`")
             finally:
                 # Cleanup
                 if file_path and os.path.exists(file_path): os.remove(file_path)
@@ -197,7 +195,7 @@ class TaskManager:
                     if os.path.exists(t): os.remove(t)
                 self.active_tasks.pop(task_id, None)
 
-    # --- ENGINE A: DIRECT (AIOHTTP) ---
+    # --- Engine A: Direct (Aiohttp) ---
     async def download_direct(self, task, url):
         task["status"] = "downloading"
         msg = task["message"]
@@ -238,7 +236,7 @@ class TaskManager:
                 
         return file_path
 
-    # --- ENGINE B: STREAM (FFMPEG) ---
+    # --- Engine B: Stream (Ffmpeg) ---
     async def download_stream(self, task, url):
         task["status"] = "recording"
         msg = task["message"]
@@ -247,7 +245,7 @@ class TaskManager:
         task["filename"] = fname
         file_path = os.path.join(DOWNLOAD_DIR, fname)
         
-        await msg.edit("**🔄 Recording Stream...**")
+        await msg.edit("**__🔄 Recording Stream...__**")
         
         # -c copy = Lossless Download (No Re-encoding)
         cmd = ["ffmpeg", "-i", url, "-c", "copy", "-bsf:a", "aac_adtstoasc", "-y", file_path]
@@ -265,7 +263,7 @@ class TaskManager:
             line = await process.stderr.readline()
             if not line: break
             
-            # Update "Recorded Size"
+            # --- "Recorded Size" ---
             if os.path.exists(file_path):
                 current_size = os.path.getsize(file_path)
                 await self.update_progress(msg, task, current_size, 0, "🔴 Recording Stream")
