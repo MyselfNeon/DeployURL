@@ -278,28 +278,28 @@ class TaskManager:
         
         thumb = None
         if is_video:
-            await msg.edit("**🖼️ Generating Thumbnail...**")
+            await msg.edit("**__🖼️ Generating Thumbnail...__**")
             thumb = await generate_thumbnail(file_path)
 
         async def upload_progress(current, total):
             if task["cancel_event"].is_set(): client.stop_transmission()
             await self.update_progress(msg, task, current, total, "🚀 Uploading")
 
-        await msg.edit(f"**📤 Uploading...**\n`{width}x{height}`")
+        await msg.edit(f"**__📤 Uploading...__**\n`{width}x{height}`")
         
         caption = f"**🎬 {task['filename']}**\n**📦 Size:** `{human_readable(os.path.getsize(file_path))}`"
         
         try:
             if is_video and width and height:
-                # SEND VIDEO WITH EXPLICIT DIMENSIONS
+                # Send Video With Explicit Dimensions
                 await client.send_video(
                     task["chat_id"], 
                     video=file_path, 
                     caption=caption,
                     thumb=thumb, 
                     duration=duration,
-                    width=width,    # <--- Fixes Square Issue
-                    height=height,  # <--- Fixes Square Issue
+                    width=width,
+                    height=height,
                     supports_streaming=True, 
                     progress=upload_progress
                 )
@@ -312,7 +312,7 @@ class TaskManager:
                     thumb=thumb, 
                     progress=upload_progress
                 )
-            await msg.edit(f"**✅ Completed!**\n`{task['filename']}`")
+            await msg.edit(f"**__✅ Completed!__**\n`{task['filename']}`")
         except Exception:
             # Fallback if send_video crashes
             try:
@@ -325,7 +325,7 @@ class TaskManager:
 
     async def update_progress(self, message, task, current, total, stage):
         now = time.time()
-        # FloodWait Logic
+        # --- FloodWait Logic ---
         if (now - task["last_edit"] < EDIT_SLEEP) and (current < total if total else True): return
         
         task["last_edit"] = now
