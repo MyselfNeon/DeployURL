@@ -138,7 +138,7 @@ class TaskManager:
             "last_edit": 0
         }
 
-        msg = await message.reply(f"**__⚡ Added to Queue...__**\n`{url}`", quote=True)
+        msg = await message.reply(f"**__😎 Task Added to Queue...__**\n`{url}`", quote=True)
         self.active_tasks[task_id]["message"] = msg
         asyncio.create_task(self.execute_task(client, task_id))
 
@@ -343,22 +343,22 @@ class TaskManager:
         eta = (total - current) / speed if speed > 0 and total else 0
         
         if total == 0:
-            prog_bar = "**__Rᴇᴄᴏʀᴅɪɴɢ Lɪᴠᴇ...__**"
-            size_str = f"**__📦 Rᴇᴄᴏʀᴅᴇᴅ :** {human_readable(current)}__"
+            prog_bar = "**__Recorded Live...__**"
+            size_str = f"**__📦 Recorded :** {human_readable(current)}__"
             eta_str = "**__Lɪᴠᴇ__**"
         else:
             prog_bar = f"{get_progressbar(current, total)} `{percent:.1f}%`"
-            size_str = f"**__📦 Sɪᴢᴇ :** {human_readable(current)} / {human_readable(total)}__"
+            size_str = f"**__📦 Size :** {human_readable(current)} / {human_readable(total)}__"
             eta_str = time_formatter(eta)
 
         text = (
             f"**{stage}**\n"
-            f"**__Fɪʟᴇ :__** `{task.get('filename', 'Unknown')}`\n"
+            f"**__File :__** `{task.get('filename', 'Unknown')}`\n"
             f"**{prog_bar}**\n\n"
             f"{size_str}\n"
-            f"**__⚡ Sᴘᴇᴇᴅ :** {human_readable(speed)}/s__\n"
+            f"**__⚡ Speed :** {human_readable(speed)}/s__\n"
             f"**__⏳ ETA :** {eta_str}__\n\n"
-            f"**__❌ Cᴀɴᴄᴇʟ :** /cancel_{task['id']}__"
+            f"**__❌ Cancel :** /cancel_{task['id']}__"
         )
         try: await message.edit(text)
         except: pass
