@@ -9,8 +9,7 @@ import json
 import filetype
 from urllib.parse import unquote
 
-# --- RENDER / VPS SUPPORT ---
-# This ensures FFmpeg/FFprobe works on Render without system installation
+# --- Render / Vps Support ---
 try:
     import static_ffmpeg
     static_ffmpeg.add_paths()
@@ -19,7 +18,7 @@ except ImportError:
 
 from pyrogram import Client, filters
 
-# ================= CONFIGURATION =================
+# --- Configuration ---
 DOWNLOAD_DIR = "downloads"
 MAX_CONCURRENT_TASKS = 5
 CHUNK_SIZE = 1024 * 1024  # 1MB Chunks
@@ -28,8 +27,7 @@ ADMINS = {841851780}      # Replace with your ID
 
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-# ================= UTILITIES =================
-
+# --- Utilities ---
 def human_readable(size: int) -> str:
     if not size: return "0 B"
     power = 2**10
@@ -53,7 +51,7 @@ def get_progressbar(current, total):
     return f"{'▰' * finished_len}{'▱' * (10 - finished_len)}"
 
 async def get_filename_from_headers(response, url):
-    """Smart filename detection."""
+    """Smart Filename Detection."""
     try:
         cd = response.headers.get("Content-Disposition")
         if cd:
@@ -354,7 +352,7 @@ class TaskManager:
             f"{size_str}\n"
             f"**⚡ Speed:** `{human_readable(speed)}/s`\n"
             f"**⏳ ETA:** `{eta_str}`\n\n"
-            f"**🚫 Cancel:** `/cancel_{task['id']}`"
+            f"**🚫 Cancel:** /cancel_{task['id']}"
         )
         try: await message.edit(text)
         except: pass
@@ -371,12 +369,11 @@ class TaskManager:
 
 manager = TaskManager()
 
-# ================= COMMANDS =================
-
+# --- Commands ---
 @Client.on_message(filters.command(["dl", "leech"]) & filters.private)
 async def dl_handler(client, message):
     if len(message.command) < 2:
-        return await message.reply("**⚠️ Usage:** `/dl url`")
+        return await message.reply("**⚠️ __Usage:__** /dl url")
     url = message.command[1]
     await manager.add_task(client, message, url)
 
@@ -384,6 +381,6 @@ async def dl_handler(client, message):
 async def cancel_handler(client, message):
     task_id = message.text.split("_")[1]
     if await manager.cancel_task(task_id):
-        await message.reply(f"**🛑 Task Cancelled.**")
+        await message.reply(f"**__🛑 Task Cancelled.__**")
     else:
-        await message.reply("**❌ Task not active.**")
+        await message.reply("**❌ __Task not Active.__**")
