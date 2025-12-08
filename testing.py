@@ -291,11 +291,11 @@ class TaskManager:
 
         async def upload_progress(current, total):
             if task["cancel_event"].is_set(): client.stop_transmission()
-            await self.update_progress(msg, task, current, total, "🚀 **__Uᴘʟᴏᴀᴅɪɴɢ__**")
+            await self.update_progress(msg, task, current, total, "🚀 **__Uploading__**")
 
-        await msg.edit(f"**__📤 Uᴘʟᴏᴀᴅɪɴɢ...__**\n**{width}x{height}**")
+        await msg.edit(f"**__📤 Uploading...__**\n**{width}x{height}**")
         
-        caption = f"**__🎬 {task['filename']}__**\n**__📦 Size:** {human_readable(os.path.getsize(file_path))}__"
+        caption = f"**– __🎬 {task['filename']}__**\n**– __📦 Size :** {human_readable(os.path.getsize(file_path))}__"
         
         try:
             if is_video and width and height:
@@ -320,16 +320,16 @@ class TaskManager:
                     thumb=thumb, 
                     progress=upload_progress
                 )
-            await msg.edit(UpUploadnᴇᴛᴇᴅ !__**\n`{task['filename']}`")
+            await msg.edit(f"**__✅ Completed !__**\n`{task['filename']}`")
         except Exception:
             # Fallback if send_video crashes
             try:
                 await client.send_document(
                     task["chat_id"], document=file_path, caption=caption, progress=upload_progress
                 )
-                await msg.edit("**__✅ Cᴏᴍᴘʟᴇᴛᴇᴅ (Fallback) !__**")
+                await msg.edit("**__✅ Completed (Fallback) !__**")
             except:
-                await msg.edit("**__❌ Upload Failed.__**")
+                await msg.edit("**__❌ Upload Failed._**")
 
     async def update_progress(self, message, task, current, total, stage):
         now = time.time()
@@ -343,9 +343,9 @@ class TaskManager:
         eta = (total - current) / speed if speed > 0 and total else 0
         
         if total == 0:
-            prog_bar = "Recording Live..."
+            prog_bar = "**__Rᴇᴄᴏʀᴅɪɴɢ Lɪᴠᴇ...__**"
             size_str = f"**__📦 Rᴇᴄᴏʀᴅᴇᴅ :** {human_readable(current)}__"
-            eta_str = "Live"
+            eta_str = "**__Lɪᴠᴇ__**"
         else:
             prog_bar = f"{get_progressbar(current, total)} `{percent:.1f}%`"
             size_str = f"**__📦 Sɪᴢᴇ :** {human_readable(current)} / {human_readable(total)}__"
@@ -379,7 +379,7 @@ manager = TaskManager()
 @Client.on_message(filters.command(["dl", "leech"]) & filters.private)
 async def dl_handler(client, message):
     if len(message.command) < 2:
-        return await message.reply("**⚠️ __Usᴀɢᴇ:__** /dl url")
+        return await message.reply("**⚠️ __Usage :__** /dl url")
     url = message.command[1]
     await manager.add_task(client, message, url)
 
@@ -387,6 +387,6 @@ async def dl_handler(client, message):
 async def cancel_handler(client, message):
     task_id = message.text.split("_")[1]
     if await manager.cancel_task(task_id):
-        await message.reply(f"**__🥲 Tᴀsᴋ Cᴀɴᴄᴇʟʟᴇᴅ.__**")
+        await message.reply(f"**__🥲 Task Cancelled.__**")
     else:
-        await message.reply("**💢 __Tᴀsᴋ Nᴏᴛ Aᴄᴛɪᴠᴇ.__**")
+        await message.reply("**💢 __Task Not Active.__**")
