@@ -223,12 +223,20 @@ class TaskManager:
                         downloaded += len(chunk)
                         await self.update_progress(msg, task, downloaded, total_size, "📥 Downloading")
 
-        # Smart Extension Renaming
+        # --- Smart Extension Renaming ---
         kind = filetype.guess(file_path)
         if kind:
-            curr_ext = os.path.splitext(file_path)[1]
-            if not curr_ext or curr_ext.lower() != f".{kind.extension}":
-                new_fname = f"{os.path.splitext(task['filename'])[0]}.{kind.extension}"
+            curr_ext = os.path.splitext(file_path)[1].lower()
+            detected_ext = f".{kind.extension}"
+
+            # If detected is .zip but file is .apk, .docx, or .jar -> Trust the original
+            valid_zips = [".apk", ".docx", ".jar", ".xlsx", ".pptx", ".odt"]
+            
+            if detected_ext == ".zip" and curr_ext in valid_zips:
+                pass 
+            # If extensions don't match, rename it
+            elif curr_ext != detected_ext:
+                new_fname = f"{os.path.splitext(task['filename'])[0]}{detected_ext}"
                 new_path = os.path.join(DOWNLOAD_DIR, new_fname)
                 os.rename(file_path, new_path)
                 file_path = new_path
