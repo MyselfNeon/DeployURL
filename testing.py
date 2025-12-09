@@ -1,392 +1,319 @@
 import os
+import shutil
 import time
-import uuid
+import math
 import asyncio
-import aiohttp
-import ssl
-import re
-import json
-import filetype
-from urllib.parse import unquote
-
-# --- Render / Vps Support ---
-try:
-    import static_ffmpeg
-    static_ffmpeg.add_paths()
-except ImportError:
-    print("Static FFmpeg not found, relying on system PATH.")
-
+import uuid
+import pyzipper
+import pikepdf
 from pyrogram import Client, filters
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
-# --- Configuration ---
-DOWNLOAD_DIR = "downloads"
-MAX_CONCURRENT_TASKS = 5
-CHUNK_SIZE = 1024 * 1024  # 1MB Chunks
-EDIT_SLEEP = 4            # Anti-Flood (Update progress every 4s)
-ADMINS = {841851780}      # Replace with your ID
+# ==================== CONFIG & GLOBALS ====================
+PROCESSED_RESULTS = {} 
+TG_MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2 GB
 
-os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+# ==================== HELPER FUNCTIONS ====================
 
-# --- Utilities ---
-def human_readable(size: int) -> str:
-    if not size: return "0 B"
+def humanbytes(size):
+    """Converts bytes to human readable string."""
+    if not size:
+        return "0 B"
     power = 2**10
     n = 0
-    units = {0: 'B', 1: 'KB', 2: 'MB', 3: 'GB', 4: 'TB'}
+    dic_powerN = {0: ' ', 1: 'Ki', 2: 'Mi', 3: 'Gi', 4: 'Ti'}
     while size > power:
         size /= power
         n += 1
-    return f"{size:.2f} {units.get(n, 'TB')}"
+    return str(round(size, 2)) + " " + dic_powerN[n] + 'B'
 
-def time_formatter(seconds: int) -> str:
-    if not seconds or seconds < 0: return "0s"
-    m, s = divmod(int(seconds), 60)
-    h, m = divmod(m, 60)
-    return f"{h}h {m}m {s}s" if h else f"{m}m {s}s"
-
-def get_progressbar(current, total):
-    if not total: return "▱" * 10
-    percentage = current / total
-    finished_len = int(percentage * 10)
-    return f"{'▰' * finished_len}{'▱' * (10 - finished_len)}"
-
-async def get_filename_from_headers(response, url):
-    """Smart Filename Detection."""
+async def progress(current, total, message: Message, start_time, status_text):
+    """Progress bar for Download/Upload with Bold+Italic styling."""
     try:
-        cd = response.headers.get("Content-Disposition")
-        if cd:
-            fname = re.findall("filename=(.+)", cd)
-            if fname: return unquote(fname[0].strip('";'))
-    except: pass
-    try:
-        path = unquote(url.split("?")[0])
-        name = path.split("/")[-1]
-        if name: return name
-    except: pass
-    return f"QuantumDL_{int(time.time())}"
-
-# --- Metadata & Ffmpeg Engines ---
-async def get_video_attributes(file_path):
-    """
-    Scans video to get exact Width/Height/Duration.
-    Essential for fixing Telegram 'Square Video' bug.
-    """
-    width, height, duration = 1280, 720, 0
-    try:
-        # Uses ffprobe (provided by static-ffmpeg)
-        cmd = [
-            "ffprobe", "-v", "error",
-            "-select_streams", "v:0",
-            "-show_entries", "stream=width,height,duration",
-            "-of", "json",
-            file_path
-        ]
-        process = await asyncio.create_subprocess_exec(
-            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        stdout, _ = await process.communicate()
-        data = json.loads(stdout)
-        
-        width = int(data['streams'][0]['width'])
-        height = int(data['streams'][0]['height'])
-        try:
-            duration = int(float(data['streams'][0]['duration']))
-        except: duration = 0
-    except Exception as e:
-        print(f"Metadata Error: {e}")
-    return width, height, duration
-
-async def generate_thumbnail(video_path):
-    thumb_path = f"{video_path}.jpg"
-    try:
-        # Extract frame at 00:00:02
-        cmd = ["ffmpeg", "-i", video_path, "-ss", "00:00:02", "-vframes", "1", thumb_path, "-y"]
-        process = await asyncio.create_subprocess_exec(
-            *cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL
-        )
-        await process.wait()
-        if os.path.exists(thumb_path): return thumb_path
-    except: pass
-    return None
-
-# --- Task Manager ---
-class TaskManager:
-    def __init__(self):
-        self.active_tasks = {}
-        self.user_semaphores = {}
-
-    def get_semaphore(self, user_id):
-        if user_id not in self.user_semaphores:
-            self.user_semaphores[user_id] = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
-        return self.user_semaphores[user_id]
-
-    async def add_task(self, client, message, url):
-        task_id = uuid.uuid4().hex[:8]
-        user_id = message.from_user.id
-        
-        self.active_tasks[task_id] = {
-            "id": task_id,
-            "url": url,
-            "user_id": user_id,
-            "chat_id": message.chat.id,
-            "status": "queued",
-            "cancel_event": asyncio.Event(),
-            "message": None,
-            "start_time": 0,
-            "filename": "Unknown",
-            "process": None, 
-            "last_edit": 0
-        }
-
-        msg = await message.reply(f"**__😎 Task Added to Queue...__**\n`{url}`", quote=True)
-        self.active_tasks[task_id]["message"] = msg
-        asyncio.create_task(self.execute_task(client, task_id))
-
-    async def execute_task(self, client, task_id):
-        task = self.active_tasks.get(task_id)
-        if not task: return
-
-        url = task["url"]
-        msg = task["message"]
-        semaphore = self.get_semaphore(task["user_id"])
-        
-        async with semaphore:
-            if task["cancel_event"].is_set(): return
-            
-            task["start_time"] = time.time()
-            file_path = None
-            
-            try:
-                # --- 1. Download Phase ---
-                is_stream = any(x in url.lower() for x in [".m3u8", ".m3u", ".mpd"])
-                
-                if is_stream:
-                    file_path = await self.download_stream(task, url)
-                else:
-                    file_path = await self.download_direct(task, url)
-
-                if not file_path: raise Exception("Download failed.")
-
-                # --- 2. Metadata Phase (Ratio) ---
-                task["status"] = "checking"
-                await msg.edit("**__📏 Checking Dimensions...__**")
-                
-                w, h, dur = 0, 0, 0
-                is_video = False
-                
-                # Check Magic Numbers (Real File Type)
-                kind = filetype.guess(file_path)
-                if kind and kind.mime.startswith("video"): is_video = True
-                elif file_path.endswith(".mp4") or file_path.endswith(".mkv"): is_video = True
-                
-                if is_video:
-                    w, h, dur = await get_video_attributes(file_path)
-
-                # --- 3. Upload Phase ---
-                await self.upload_file(client, task, file_path, w, h, dur, is_video)
-
-            except Exception as e:
-                await msg.edit(f"**__❌ Error:__** `{str(e)}`")
-            finally:
-                # Cleanup
-                if file_path and os.path.exists(file_path): os.remove(file_path)
-                if file_path:
-                    t = f"{file_path}.jpg"
-                    if os.path.exists(t): os.remove(t)
-                self.active_tasks.pop(task_id, None)
-
-    # --- Engine A: Direct (Aiohttp) ---
-    async def download_direct(self, task, url):
-        task["status"] = "downloading"
-        msg = task["message"]
-        
-        ssl_ctx = ssl.create_default_context()
-        ssl_ctx.check_hostname = False
-        ssl_ctx.verify_mode = ssl.CERT_NONE
-
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, ssl=ssl_ctx) as response:
-                if response.status != 200: raise Exception(f"HTTP {response.status}")
-
-                fname = await get_filename_from_headers(response, url)
-                if "." not in fname: fname += ".dat"
-                task["filename"] = fname
-                
-                file_path = os.path.join(DOWNLOAD_DIR, fname)
-                total_size = int(response.headers.get("Content-Length", 0))
-                downloaded = 0
-                
-                with open(file_path, 'wb') as f:
-                    async for chunk in response.content.iter_chunked(CHUNK_SIZE):
-                        if task["cancel_event"].is_set(): raise Exception("Cancelled")
-                        f.write(chunk)
-                        downloaded += len(chunk)
-                        await self.update_progress(msg, task, downloaded, total_size, "📥 Downloading")
-
-        # --- Smart Extension Renaming ---
-        kind = filetype.guess(file_path)
-        if kind:
-            curr_ext = os.path.splitext(file_path)[1].lower()
-            detected_ext = f".{kind.extension}"
-
-            # If detected is .zip but file is .apk, .docx, or .jar -> Trust the original
-            valid_zips = [".apk", ".docx", ".jar", ".xlsx", ".pptx", ".odt"]
-            
-            if detected_ext == ".zip" and curr_ext in valid_zips:
-                pass 
-            # If extensions don't match, rename it
-            elif curr_ext != detected_ext:
-                new_fname = f"{os.path.splitext(task['filename'])[0]}{detected_ext}"
-                new_path = os.path.join(DOWNLOAD_DIR, new_fname)
-                os.rename(file_path, new_path)
-                file_path = new_path
-                task["filename"] = new_fname
-                
-        return file_path
-
-    # --- Engine B: Stream (Ffmpeg) ---
-    async def download_stream(self, task, url):
-        task["status"] = "recording"
-        msg = task["message"]
-        
-        fname = f"Stream_{int(time.time())}.mp4"
-        task["filename"] = fname
-        file_path = os.path.join(DOWNLOAD_DIR, fname)
-        
-        await msg.edit("**__🔄 Recording Stream...__**")
-        
-        # -c copy = Lossless Download (No Re-encoding)
-        cmd = ["ffmpeg", "-i", url, "-c", "copy", "-bsf:a", "aac_adtstoasc", "-y", file_path]
-        
-        process = await asyncio.create_subprocess_exec(
-            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        task["process"] = process
-
-        while True:
-            if task["cancel_event"].is_set():
-                process.kill()
-                raise Exception("Cancelled")
-            
-            line = await process.stderr.readline()
-            if not line: break
-            
-            # --- "Recorded Size" ---
-            if os.path.exists(file_path):
-                current_size = os.path.getsize(file_path)
-                await self.update_progress(msg, task, current_size, 0, "🔴 Recording Stream")
-
-        await process.wait()
-        if os.path.exists(file_path) and os.path.getsize(file_path) > 0: return file_path
-        raise Exception("Stream download failed or empty.")
-
-    async def upload_file(self, client, task, file_path, width, height, duration, is_video):
-        msg = task["message"]
-        task["status"] = "uploading"
-        
-        thumb = None
-        if is_video:
-            await msg.edit("**__🖼️ Generating Thumbnail...__**")
-            thumb = await generate_thumbnail(file_path)
-
-        async def upload_progress(current, total):
-            if task["cancel_event"].is_set(): client.stop_transmission()
-            await self.update_progress(msg, task, current, total, "🚀 **__Uploading__**")
-
-        await msg.edit(f"**__📤 Uploading...__**\n**{width}x{height}**")
-        
-        caption = f"**– __🎬 {task['filename']}__**\n**– __📦 Size :** {human_readable(os.path.getsize(file_path))}__"
-        
-        try:
-            if is_video and width and height:
-                # Send Video With Explicit Dimensions
-                await client.send_video(
-                    task["chat_id"], 
-                    video=file_path, 
-                    caption=caption,
-                    thumb=thumb, 
-                    duration=duration,
-                    width=width,
-                    height=height,
-                    supports_streaming=True, 
-                    progress=upload_progress
-                )
-            else:
-                # Fallback / Non-Video
-                await client.send_document(
-                    task["chat_id"], 
-                    document=file_path, 
-                    caption=caption,
-                    thumb=thumb, 
-                    progress=upload_progress
-                )
-            await msg.edit(f"**__✅ Completed !__**\n`{task['filename']}`")
-        except Exception:
-            # Fallback if send_video crashes
-            try:
-                await client.send_document(
-                    task["chat_id"], document=file_path, caption=caption, progress=upload_progress
-                )
-                await msg.edit("**__✅ Completed (Fallback) !__**")
-            except:
-                await msg.edit("**__❌ Upload Failed._**")
-
-    async def update_progress(self, message, task, current, total, stage):
         now = time.time()
-        # --- FloodWait Logic ---
-        if (now - task["last_edit"] < EDIT_SLEEP) and (current < total if total else True): return
+        diff = now - start_time
         
-        task["last_edit"] = now
-        elapsed = now - task["start_time"]
-        speed = current / elapsed if elapsed > 0 else 0
-        percent = (current / total * 100) if total else 0
-        eta = (total - current) / speed if speed > 0 and total else 0
-        
-        if total == 0:
-            prog_bar = "**__Recorded Live...__**"
-            size_str = f"**__📦 Recorded :** {human_readable(current)}__"
-            eta_str = "**__Lɪᴠᴇ__**"
-        else:
-            prog_bar = f"{get_progressbar(current, total)} `{percent:.1f}%`"
-            size_str = f"**__📦 Size :** {human_readable(current)} / {human_readable(total)}__"
-            eta_str = time_formatter(eta)
+        if round(diff % 5.00) == 0 or current == total:
+            percentage = current * 100 / total
+            speed = current / diff if diff > 0 else 0
+            elapsed_time = round(diff) * 1000
+            time_to_completion = round((total - current) / speed) * 1000 if speed > 0 else 0
+            estimated_total_time = elapsed_time + time_to_completion
 
-        text = (
-            f"**{stage}**\n"
-            f"**__File :__** `{task.get('filename', 'Unknown')}`\n"
-            f"**{prog_bar}**\n\n"
-            f"{size_str}\n"
-            f"**__⚡ Speed :** {human_readable(speed)}/s__\n"
-            f"**__⏳ ETA :** {eta_str}__\n\n"
-            f"**__❌ Cancel :** /cancel_{task['id']}__"
+            elapsed_str = time.strftime('%H:%M:%S', time.gmtime(elapsed_time / 1000))
+            eta_str = time.strftime('%H:%M:%S', time.gmtime(estimated_total_time / 1000))
+
+            # Progress Bar Visual
+            progress_bar = "[{0}{1}] \n**__{2}%__**".format(
+                ''.join(["⬢" for i in range(math.floor(percentage / 10))]),
+                ''.join(["⬡" for i in range(10 - math.floor(percentage / 10))]),
+                round(percentage, 2)
+            )
+
+            # FORCE BOLD + ITALIC ON EVERYTHING
+            tmp = f"{status_text}\n{progress_bar}\n"
+            tmp += f"**__📦 Size:__** {humanbytes(current)} / {humanbytes(total)}\n"
+            tmp += f"**__🚀 Speed:__** {humanbytes(speed)}/s\n"
+            tmp += f"**__⏳ Time:__** {elapsed_str} / {eta_str}"
+
+            await message.edit(tmp)
+    except Exception:
+        pass
+
+# ==================== BLOCKING LOGIC (THREADS) ====================
+
+def _cpu_remove_pdf(input_path, output_path, password):
+    try:
+        with pikepdf.open(input_path, password=password) as pdf:
+            pdf.save(output_path)
+        return True, None
+    except pikepdf.PasswordError:
+        return False, "Wrong Password"
+    except Exception as e:
+        return False, str(e)
+
+def _cpu_remove_zip(input_path, extract_path, password):
+    try:
+        with pyzipper.AESZipFile(input_path) as zf:
+            if password:
+                zf.extractall(path=extract_path, pwd=password.encode("utf-8"))
+            else:
+                zf.extractall(path=extract_path)
+        return True, None
+    except RuntimeError:
+        return False, "Wrong Password or Corrupt ZIP"
+    except Exception as e:
+        return False, str(e)
+
+def _cpu_add_pass(input_path, output_path, password, is_zip):
+    try:
+        if not is_zip: # PDF
+            with pikepdf.open(input_path) as pdf:
+                pdf.save(output_path, encryption=pikepdf.Encryption(owner=password, user=password, R=4))
+        else: # ZIP
+            with pyzipper.AESZipFile(output_path, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES) as zf:
+                zf.setpassword(password.encode("utf-8"))
+                with pyzipper.AESZipFile(input_path) as original:
+                    for f in original.namelist():
+                        zf.writestr(f, original.read(f))
+        return True, None
+    except Exception as e:
+        return False, str(e)
+
+# ==================== REMOVE PASSWORD COMMAND ====================
+@Client.on_message(filters.command("removepass") & filters.reply)
+async def remove_password(client: Client, message: Message):
+    if not message.reply_to_message or not message.reply_to_message.document:
+        return await message.reply("**__⚠️ Reply to a PDF or ZIP file.__**")
+
+    file_name = message.reply_to_message.document.file_name
+    args = message.text.split(" ", 1)
+    password = args[1] if len(args) > 1 else None
+
+    task_id = str(uuid.uuid4())
+    base_dir = f"temp_{task_id}"
+    os.makedirs(base_dir, exist_ok=True)
+    
+    status = await message.reply("**__⏳ Downloading...__**")
+    start_time = time.time()
+
+    try:
+        file_path = os.path.join(base_dir, file_name)
+        await message.reply_to_message.download(
+            file_path,
+            progress=progress,
+            progress_args=(status, start_time, "**__📥 Downloading File...__**")
         )
-        try: await message.edit(text)
-        except: pass
 
-    async def cancel_task(self, task_id):
-        if task_id in self.active_tasks:
-            self.active_tasks[task_id]["cancel_event"].set()
-            proc = self.active_tasks[task_id].get("process")
-            if proc:
-                try: proc.kill()
-                except: pass
-            return True
-        return False
+        await status.edit("**__🔐 Decrypting (This may take a moment)...__**")
 
-manager = TaskManager()
+        # --- HANDLE PDF ---
+        if file_name.lower().endswith(".pdf"):
+            unlocked_path = os.path.join(base_dir, f"Unlocked_{file_name}")
+            
+            success, error = await asyncio.to_thread(_cpu_remove_pdf, file_path, unlocked_path, password)
+            
+            if not success:
+                return await status.edit(f"**__❌ Error:__** \n`{error}`")
 
-# --- Commands ---
-@Client.on_message(filters.command(["dl", "leech"]) & filters.private)
-async def dl_handler(client, message):
-    if len(message.command) < 2:
-        return await message.reply("**⚠️ __Usage :__** /dl url")
-    url = message.command[1]
-    await manager.add_task(client, message, url)
+            if os.path.getsize(unlocked_path) > TG_MAX_FILE_SIZE:
+                return await status.edit("**__❌ File Too Large (2GB Limit).__**")
 
-@Client.on_message(filters.regex(r"^/cancel_") & filters.private)
-async def cancel_handler(client, message):
-    task_id = message.text.split("_")[1]
-    if await manager.cancel_task(task_id):
-        await message.reply(f"**__🥲 Task Cancelled.__**")
-    else:
-        await message.reply("**💢 __Task Not Active.__**")
+            await message.reply_document(
+                unlocked_path,
+                caption="**__✅ File Unlocked Successfully__**\n**__🔥 Powered By @NeonFiles__**",
+                progress=progress,
+                progress_args=(status, time.time(), "**__📤 Uploading...__**")
+            )
+            await status.delete()
+
+        # --- HANDLE ZIP ---
+        elif file_name.lower().endswith(".zip"):
+            extracted_dir = os.path.join(base_dir, "extracted")
+            os.makedirs(extracted_dir, exist_ok=True)
+
+            success, error = await asyncio.to_thread(_cpu_remove_zip, file_path, extracted_dir, password)
+            
+            if not success:
+                return await status.edit(f"**__❌ Error:__** \n`{error}`")
+
+            unlocked_files = []
+            files_too_large = False
+            for root, _, files in os.walk(extracted_dir):
+                for f in files:
+                    full_path = os.path.join(root, f)
+                    unlocked_files.append(full_path)
+                    if os.path.getsize(full_path) > TG_MAX_FILE_SIZE:
+                        files_too_large = True
+
+            PROCESSED_RESULTS[task_id] = {
+                "files": unlocked_files, 
+                "base_dir": base_dir,
+                "extract_dir": extracted_dir
+            }
+
+            buttons = []
+            if files_too_large:
+                buttons.append([InlineKeyboardButton("📂 Send as ZIP", callback_data=f"zip_{task_id}")])
+                msg_text = "**__⚠️ Some files are >2GB. Must send as ZIP.__**"
+            else:
+                buttons.append([InlineKeyboardButton("📂 Send as ZIP", callback_data=f"zip_{task_id}")])
+                buttons.append([InlineKeyboardButton("📄 Send Files", callback_data=f"files_{task_id}")])
+                msg_text = f"**__✅ ZIP Unlocked! ({len(unlocked_files)} files)__**\n**__Choose delivery method:__**"
+
+            await status.edit(msg_text, reply_markup=InlineKeyboardMarkup(buttons))
+            return 
+
+        else:
+            await status.edit("**__⚠️ Only PDF and ZIP supported.__**")
+
+    except Exception as e:
+        await status.edit(f"**__🚫 Error:__** \n`{e}`")
+        shutil.rmtree(base_dir, ignore_errors=True)
+
+    if not file_name.lower().endswith(".zip"):
+        shutil.rmtree(base_dir, ignore_errors=True)
+
+
+# ====================== ADD PASSWORD COMMAND ======================
+@Client.on_message(filters.command("addpass") & filters.reply)
+async def add_password(client: Client, message: Message):
+    if not message.reply_to_message or not message.reply_to_message.document:
+        return await message.reply("**__⚠️ Reply to a PDF or ZIP file.__**")
+
+    args = message.text.split(" ", 1)
+    password = args[1] if len(args) > 1 else None
+    if not password:
+        return await message.reply("**__⚠️ Usage:__** `/addpass <password>`")
+
+    file_name = message.reply_to_message.document.file_name
+    
+    task_id = str(uuid.uuid4())
+    base_dir = f"temp_{task_id}"
+    os.makedirs(base_dir, exist_ok=True)
+    
+    status = await message.reply("**__⏳ Downloading...__**")
+    start_time = time.time()
+
+    try:
+        file_path = os.path.join(base_dir, file_name)
+        await message.reply_to_message.download(
+            file_path,
+            progress=progress,
+            progress_args=(status, start_time, "**__📥 Downloading...__**")
+        )
+
+        output_path = os.path.join(base_dir, f"Protected_{file_name}")
+        await status.edit("**__🔐 Encrypting...__**")
+
+        is_zip = file_name.lower().endswith(".zip")
+        is_pdf = file_name.lower().endswith(".pdf")
+
+        if not (is_zip or is_pdf):
+             return await status.edit("**__⚠️ Only PDF and ZIP supported.__**")
+
+        success, error = await asyncio.to_thread(_cpu_add_pass, file_path, output_path, password, is_zip)
+
+        if not success:
+             return await status.edit(f"**__❌ Encryption Error:__** \n`{error}`")
+
+        await message.reply_document(
+            output_path,
+            caption=f"**__🔐 Protected Successfully__**\n**__🔑 Pass:__** `{password}`\n**__🔥 Powered By @NeonFiles__**",
+            progress=progress,
+            progress_args=(status, time.time(), "**__📤 Uploading...__**")
+        )
+        await status.delete()
+
+    except Exception as e:
+        await status.edit(f"**__🚫 Error:__** \n`{e}`")
+
+    finally:
+        shutil.rmtree(base_dir, ignore_errors=True)
+
+
+# ====================== CALLBACK HANDLER ======================
+@Client.on_callback_query(filters.regex(r"^(zip|files)_"))
+async def handle_send_choice(client: Client, callback: CallbackQuery):
+    action, task_id = callback.data.split("_")
+
+    if task_id not in PROCESSED_RESULTS:
+        return await callback.answer("⚠️ Session expired.", show_alert=True)
+
+    data = PROCESSED_RESULTS[task_id]
+    files = data["files"]
+    base_dir = data["base_dir"]
+    extract_dir = data["extract_dir"]
+
+    if action == "zip":
+        new_zip = os.path.join(base_dir, "Unlocked_Files.zip")
+        await callback.message.edit("**__📦 Re-zipping files...__**")
+        
+        def _repack():
+            with pyzipper.AESZipFile(new_zip, "w", compression=pyzipper.ZIP_DEFLATED) as newzf:
+                for f in files:
+                    arcname = os.path.relpath(f, extract_dir)
+                    newzf.write(f, arcname=arcname)
+        
+        await asyncio.to_thread(_repack)
+        
+        await callback.message.reply_document(
+            new_zip, 
+            caption="**__📂 Your Unlocked ZIP__**\n**__🔥 Powered By @NeonFiles__**",
+            progress=progress,
+            progress_args=(callback.message, time.time(), "**__📤 Uploading ZIP...__**")
+        )
+
+    elif action == "files":
+        await callback.message.edit("**__📄 Sending files one by one...__**")
+        for f in files:
+            try:
+                await callback.message.reply_document(f, caption="**__✅ Unlocked__**")
+                await asyncio.sleep(0.8) 
+            except Exception:
+                pass
+    
+    await callback.message.delete()
+    shutil.rmtree(base_dir, ignore_errors=True)
+    del PROCESSED_RESULTS[task_id]
+
+# ====================== HELP COMMAND ======================
+@Client.on_message(filters.command("passhelp"))
+async def password_help(client: Client, message: Message):
+    help_text = """
+<blockquote>**__🔐 𝐏𝐀𝐒𝐒𝐖𝐎𝐑𝐃 𝐌𝐀𝐍𝐀𝐆𝐄𝐑 𝐏𝐑𝐎__**</blockquote>
+
+**__🔓 /removepass__**
+**__Reply to PDF/ZIP. Removes password.__**
+
+**__🔐 /addpass <password>__**
+**__Reply to PDF/ZIP. Adds password protection.__**
+
+**__✨ Pro Features:__**
+**__• Progress Bars 📊__**
+**__• Fast Async Processing ⚡️__**
+**__• 2GB+ File Support 📁__**
+
+**__🔥 Powered By @NeonFiles 🔥__**
+"""
+    await message.reply(help_text)
