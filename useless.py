@@ -33,10 +33,8 @@ async def sync_bot_commands(app: Client):
     except Exception as e:
         print(f"✗ Failed to Sync Commands: {e}")
 
-# ===================================
-# PLUGIN ENTRY
-# ===================================
+# --- Plugin Entry ---
 def init(app: Client):
-    # Instead of @app.on_start, we schedule a background task
-    # This runs parallel to your bot starting up
+    # Runs Parallel to your Bot Starting Up
     app.loop.create_task(sync_bot_commands(app))
+
