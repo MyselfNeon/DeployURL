@@ -1,319 +1,270 @@
-import os
-import shutil
-import time
-import math
-import asyncio
-import uuid
-import pyzipper
-import pikepdf
-from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+import re
+from os import environ
+from Script import script 
 
-# ==================== CONFIG & GLOBALS ====================
-PROCESSED_RESULTS = {} 
-TG_MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2 GB
-
-# ==================== HELPER FUNCTIONS ====================
-
-def humanbytes(size):
-    """Converts bytes to human readable string."""
-    if not size:
-        return "0 B"
-    power = 2**10
-    n = 0
-    dic_powerN = {0: ' ', 1: 'Ki', 2: 'Mi', 3: 'Gi', 4: 'Ti'}
-    while size > power:
-        size /= power
-        n += 1
-    return str(round(size, 2)) + " " + dic_powerN[n] + 'B'
-
-async def progress(current, total, message: Message, start_time, status_text):
-    """Progress bar for Download/Upload with Bold+Italic styling."""
-    try:
-        now = time.time()
-        diff = now - start_time
-        
-        if round(diff % 5.00) == 0 or current == total:
-            percentage = current * 100 / total
-            speed = current / diff if diff > 0 else 0
-            elapsed_time = round(diff) * 1000
-            time_to_completion = round((total - current) / speed) * 1000 if speed > 0 else 0
-            estimated_total_time = elapsed_time + time_to_completion
-
-            elapsed_str = time.strftime('%H:%M:%S', time.gmtime(elapsed_time / 1000))
-            eta_str = time.strftime('%H:%M:%S', time.gmtime(estimated_total_time / 1000))
-
-            # Progress Bar Visual
-            progress_bar = "[{0}{1}] \n**__{2}%__**".format(
-                ''.join(["⬢" for i in range(math.floor(percentage / 10))]),
-                ''.join(["⬡" for i in range(10 - math.floor(percentage / 10))]),
-                round(percentage, 2)
-            )
-
-            # FORCE BOLD + ITALIC ON EVERYTHING
-            tmp = f"{status_text}\n{progress_bar}\n"
-            tmp += f"**__📦 Size:__** {humanbytes(current)} / {humanbytes(total)}\n"
-            tmp += f"**__🚀 Speed:__** {humanbytes(speed)}/s\n"
-            tmp += f"**__⏳ Time:__** {elapsed_str} / {eta_str}"
-
-            await message.edit(tmp)
-    except Exception:
-        pass
-
-# ==================== BLOCKING LOGIC (THREADS) ====================
-
-def _cpu_remove_pdf(input_path, output_path, password):
-    try:
-        with pikepdf.open(input_path, password=password) as pdf:
-            pdf.save(output_path)
-        return True, None
-    except pikepdf.PasswordError:
-        return False, "Wrong Password"
-    except Exception as e:
-        return False, str(e)
-
-def _cpu_remove_zip(input_path, extract_path, password):
-    try:
-        with pyzipper.AESZipFile(input_path) as zf:
-            if password:
-                zf.extractall(path=extract_path, pwd=password.encode("utf-8"))
-            else:
-                zf.extractall(path=extract_path)
-        return True, None
-    except RuntimeError:
-        return False, "Wrong Password or Corrupt ZIP"
-    except Exception as e:
-        return False, str(e)
-
-def _cpu_add_pass(input_path, output_path, password, is_zip):
-    try:
-        if not is_zip: # PDF
-            with pikepdf.open(input_path) as pdf:
-                pdf.save(output_path, encryption=pikepdf.Encryption(owner=password, user=password, R=4))
-        else: # ZIP
-            with pyzipper.AESZipFile(output_path, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES) as zf:
-                zf.setpassword(password.encode("utf-8"))
-                with pyzipper.AESZipFile(input_path) as original:
-                    for f in original.namelist():
-                        zf.writestr(f, original.read(f))
-        return True, None
-    except Exception as e:
-        return False, str(e)
-
-# ==================== REMOVE PASSWORD COMMAND ====================
-@Client.on_message(filters.command("removepass") & filters.reply)
-async def remove_password(client: Client, message: Message):
-    if not message.reply_to_message or not message.reply_to_message.document:
-        return await message.reply("**__⚠️ Reply to a PDF or ZIP file.__**")
-
-    file_name = message.reply_to_message.document.file_name
-    args = message.text.split(" ", 1)
-    password = args[1] if len(args) > 1 else None
-
-    task_id = str(uuid.uuid4())
-    base_dir = f"temp_{task_id}"
-    os.makedirs(base_dir, exist_ok=True)
-    
-    status = await message.reply("**__⏳ Downloading...__**")
-    start_time = time.time()
-
-    try:
-        file_path = os.path.join(base_dir, file_name)
-        await message.reply_to_message.download(
-            file_path,
-            progress=progress,
-            progress_args=(status, start_time, "**__📥 Downloading File...__**")
-        )
-
-        await status.edit("**__🔐 Decrypting (This may take a moment)...__**")
-
-        # --- HANDLE PDF ---
-        if file_name.lower().endswith(".pdf"):
-            unlocked_path = os.path.join(base_dir, f"Unlocked_{file_name}")
-            
-            success, error = await asyncio.to_thread(_cpu_remove_pdf, file_path, unlocked_path, password)
-            
-            if not success:
-                return await status.edit(f"**__❌ Error:__** \n`{error}`")
-
-            if os.path.getsize(unlocked_path) > TG_MAX_FILE_SIZE:
-                return await status.edit("**__❌ File Too Large (2GB Limit).__**")
-
-            await message.reply_document(
-                unlocked_path,
-                caption="**__✅ File Unlocked Successfully__**\n**__🔥 Powered By @NeonFiles__**",
-                progress=progress,
-                progress_args=(status, time.time(), "**__📤 Uploading...__**")
-            )
-            await status.delete()
-
-        # --- HANDLE ZIP ---
-        elif file_name.lower().endswith(".zip"):
-            extracted_dir = os.path.join(base_dir, "extracted")
-            os.makedirs(extracted_dir, exist_ok=True)
-
-            success, error = await asyncio.to_thread(_cpu_remove_zip, file_path, extracted_dir, password)
-            
-            if not success:
-                return await status.edit(f"**__❌ Error:__** \n`{error}`")
-
-            unlocked_files = []
-            files_too_large = False
-            for root, _, files in os.walk(extracted_dir):
-                for f in files:
-                    full_path = os.path.join(root, f)
-                    unlocked_files.append(full_path)
-                    if os.path.getsize(full_path) > TG_MAX_FILE_SIZE:
-                        files_too_large = True
-
-            PROCESSED_RESULTS[task_id] = {
-                "files": unlocked_files, 
-                "base_dir": base_dir,
-                "extract_dir": extracted_dir
-            }
-
-            buttons = []
-            if files_too_large:
-                buttons.append([InlineKeyboardButton("📂 Send as ZIP", callback_data=f"zip_{task_id}")])
-                msg_text = "**__⚠️ Some files are >2GB. Must send as ZIP.__**"
-            else:
-                buttons.append([InlineKeyboardButton("📂 Send as ZIP", callback_data=f"zip_{task_id}")])
-                buttons.append([InlineKeyboardButton("📄 Send Files", callback_data=f"files_{task_id}")])
-                msg_text = f"**__✅ ZIP Unlocked! ({len(unlocked_files)} files)__**\n**__Choose delivery method:__**"
-
-            await status.edit(msg_text, reply_markup=InlineKeyboardMarkup(buttons))
-            return 
-
-        else:
-            await status.edit("**__⚠️ Only PDF and ZIP supported.__**")
-
-    except Exception as e:
-        await status.edit(f"**__🚫 Error:__** \n`{e}`")
-        shutil.rmtree(base_dir, ignore_errors=True)
-
-    if not file_name.lower().endswith(".zip"):
-        shutil.rmtree(base_dir, ignore_errors=True)
+# ============================================================
+# 🔹 REGEX PATTERN
+# ============================================================
+id_pattern = re.compile(r'^.\d+$')
 
 
-# ====================== ADD PASSWORD COMMAND ======================
-@Client.on_message(filters.command("addpass") & filters.reply)
-async def add_password(client: Client, message: Message):
-    if not message.reply_to_message or not message.reply_to_message.document:
-        return await message.reply("**__⚠️ Reply to a PDF or ZIP file.__**")
+# ============================================================
+# 🔹 BOT INFORMATION
+# ============================================================
+SESSION = environ.get('SESSION', 'MyselfNeon')
+API_ID = int(environ.get('API_ID', ''))
+API_HASH = environ.get('API_HASH', '')
+BOT_TOKEN = environ.get('BOT_TOKEN', "")
 
-    args = message.text.split(" ", 1)
-    password = args[1] if len(args) > 1 else None
-    if not password:
-        return await message.reply("**__⚠️ Usage:__** `/addpass <password>`")
+# Keep-Alive URL
+KEEP_ALIVE_URL = environ.get("KEEP_ALIVE_URL", "")  # <-- Add this line
 
-    file_name = message.reply_to_message.document.file_name
-    
-    task_id = str(uuid.uuid4())
-    base_dir = f"temp_{task_id}"
-    os.makedirs(base_dir, exist_ok=True)
-    
-    status = await message.reply("**__⏳ Downloading...__**")
-    start_time = time.time()
+# ============================================================
+# 🔹 START PICTURES
+# ============================================================
+# (Add Multiple By Giving One Space Between Each)
+PICS = (
+    environ.get(
+        'PICS',
+        'https://files.catbox.moe/ybg6gw.jpg '
+        'https://files.catbox.moe/b5a3dz.jpg '
+        'https://files.catbox.moe/n0xw7h.jpg '
+        'https://files.catbox.moe/fhexii.jpg '
+        'https://files.catbox.moe/v7w8co.jpg '
+        'https://files.catbox.moe/r946bu.jpg'
+    )
+).split()
 
-    try:
-        file_path = os.path.join(base_dir, file_name)
-        await message.reply_to_message.download(
-            file_path,
-            progress=progress,
-            progress_args=(status, start_time, "**__📥 Downloading...__**")
-        )
+# ============================================================
+# 🔹 ADMINS & USERS
+# ============================================================
+ADMINS = [int(admin) if id_pattern.search(admin) else admin
+          for admin in environ.get('ADMINS', '841851780').split()]  # Multiple IDs separated by space
 
-        output_path = os.path.join(base_dir, f"Protected_{file_name}")
-        await status.edit("**__🔐 Encrypting...__**")
+auth_users = [int(user) if id_pattern.search(user) else user
+              for user in environ.get('AUTH_USERS', '').split()]  # Multiple IDs separated by space
 
-        is_zip = file_name.lower().endswith(".zip")
-        is_pdf = file_name.lower().endswith(".pdf")
-
-        if not (is_zip or is_pdf):
-             return await status.edit("**__⚠️ Only PDF and ZIP supported.__**")
-
-        success, error = await asyncio.to_thread(_cpu_add_pass, file_path, output_path, password, is_zip)
-
-        if not success:
-             return await status.edit(f"**__❌ Encryption Error:__** \n`{error}`")
-
-        await message.reply_document(
-            output_path,
-            caption=f"**__🔐 Protected Successfully__**\n**__🔑 Pass:__** `{password}`\n**__🔥 Powered By @NeonFiles__**",
-            progress=progress,
-            progress_args=(status, time.time(), "**__📤 Uploading...__**")
-        )
-        await status.delete()
-
-    except Exception as e:
-        await status.edit(f"**__🚫 Error:__** \n`{e}`")
-
-    finally:
-        shutil.rmtree(base_dir, ignore_errors=True)
+AUTH_USERS = (auth_users + ADMINS) if auth_users else []
 
 
-# ====================== CALLBACK HANDLER ======================
-@Client.on_callback_query(filters.regex(r"^(zip|files)_"))
-async def handle_send_choice(client: Client, callback: CallbackQuery):
-    action, task_id = callback.data.split("_")
+# ============================================================
+# 🔹 CHANNELS AND GROUPS
+# ============================================================
+LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-1001889915480'))
+# This Channel Is For When User Start Your Bot Then Bot Send That User Name And Id In This Log Channel, Same For Group Also.
 
-    if task_id not in PROCESSED_RESULTS:
-        return await callback.answer("⚠️ Session expired.", show_alert=True)
+CHANNELS = [int(ch) if id_pattern.search(ch) else ch
+            for ch in environ.get('CHANNELS', '-1002627138181 -1002487845241').split()]
+# This Is File Channel Where You Upload Your File Then Bot Automatically Save It In Database
 
-    data = PROCESSED_RESULTS[task_id]
-    files = data["files"]
-    base_dir = data["base_dir"]
-    extract_dir = data["extract_dir"]
+REQUEST_TO_JOIN_MODE = bool(environ.get('REQUEST_TO_JOIN_MODE', False))  # True → request to join FSUB
+TRY_AGAIN_BTN = bool(environ.get('TRY_AGAIN_BTN', False))                # Retry button for FSUB
 
-    if action == "zip":
-        new_zip = os.path.join(base_dir, "Unlocked_Files.zip")
-        await callback.message.edit("**__📦 Re-zipping files...__**")
-        
-        def _repack():
-            with pyzipper.AESZipFile(new_zip, "w", compression=pyzipper.ZIP_DEFLATED) as newzf:
-                for f in files:
-                    arcname = os.path.relpath(f, extract_dir)
-                    newzf.write(f, arcname=arcname)
-        
-        await asyncio.to_thread(_repack)
-        
-        await callback.message.reply_document(
-            new_zip, 
-            caption="**__📂 Your Unlocked ZIP__**\n**__🔥 Powered By @NeonFiles__**",
-            progress=progress,
-            progress_args=(callback.message, time.time(), "**__📤 Uploading ZIP...__**")
-        )
+# Force Subscribe Channel
+auth_channel = environ.get('AUTH_CHANNEL', '-1002384933640')
+AUTH_CHANNEL = int(auth_channel) if auth_channel and id_pattern.search(auth_channel) else None
 
-    elif action == "files":
-        await callback.message.edit("**__📄 Sending files one by one...__**")
-        for f in files:
-            try:
-                await callback.message.reply_document(f, caption="**__✅ Unlocked__**")
-                await asyncio.sleep(0.8) 
-            except Exception:
-                pass
-    
-    await callback.message.delete()
-    shutil.rmtree(base_dir, ignore_errors=True)
-    del PROCESSED_RESULTS[task_id]
+# File request channel
+reqst_channel = environ.get('REQST_CHANNEL', '-1002158258466')
+REQST_CHANNEL = int(reqst_channel) if reqst_channel and id_pattern.search(reqst_channel) else None
 
-# ====================== HELP COMMAND ======================
-@Client.on_message(filters.command("passhelp"))
-async def password_help(client: Client, message: Message):
-    help_text = """
-<blockquote>**__🔐 𝐏𝐀𝐒𝐒𝐖𝐎𝐑𝐃 𝐌𝐀𝐍𝐀𝐆𝐄𝐑 𝐏𝐑𝐎__**</blockquote>
+# Index request channel
+INDEX_REQ_CHANNEL = int(environ.get('INDEX_REQ_CHANNEL', LOG_CHANNEL))
 
-**__🔓 /removepass__**
-**__Reply to PDF/ZIP. Removes password.__**
+# Bot support group
+support_chat_id = environ.get('SUPPORT_CHAT_ID', '')
+SUPPORT_CHAT_ID = int(support_chat_id) if support_chat_id and id_pattern.search(support_chat_id) else None
 
-**__🔐 /addpass <password>__**
-**__Reply to PDF/ZIP. Adds password protection.__**
+# File store channel (/batch command)
+FILE_STORE_CHANNEL = [int(ch) for ch in (environ.get('FILE_STORE_CHANNEL', '-1002487845241')).split()]
 
-**__✨ Pro Features:__**
-**__• Progress Bars 📊__**
-**__• Fast Async Processing ⚡️__**
-**__• 2GB+ File Support 📁__**
+# Delete channel(s)
+DELETE_CHANNELS = [int(dch) if id_pattern.search(dch) else dch
+                   for dch in environ.get('DELETE_CHANNELS', '-1002231967338').split()]
 
-**__🔥 Powered By @NeonFiles 🔥__**
-"""
-    await message.reply(help_text)
+
+# ============================================================
+# 🔹 DATABASE
+# ============================================================
+DATABASE_URI = environ.get('DATABASE_URI', "")
+DATABASE_NAME = environ.get('DATABASE_NAME', "NeonFilter")
+COLLECTION_NAME = environ.get('COLLECTION_NAME', 'neoncollection')
+
+MULTIPLE_DATABASE = bool(environ.get('MULTIPLE_DATABASE', False))
+
+# Separate DBs if MULTIPLE_DATABASE = True
+O_DB_URI = environ.get('O_DB_URI', "")  # This Db Is For Other Data Store
+F_DB_URI = environ.get('F_DB_URI', "")  # This Db Is For File Data Store
+S_DB_URI = environ.get('S_DB_URI', "")  # This Db is for File Data Store When First Db Is Going To Be Full
+
+if not MULTIPLE_DATABASE:
+    USER_DB_URI = OTHER_DB_URI = FILE_DB_URI = SEC_FILE_DB_URI = DATABASE_URI
+else:
+    USER_DB_URI = DATABASE_URI
+    OTHER_DB_URI = O_DB_URI
+    FILE_DB_URI = F_DB_URI
+    SEC_FILE_DB_URI = S_DB_URI
+
+
+# ============================================================
+# 🔹 PREMIUM AND REFERAL 
+# ============================================================
+PREMIUM_AND_REFERAL_MODE = bool(environ.get('PREMIUM_AND_REFERAL_MODE', True)) # Set Ture Or False
+
+# If PREMIUM_AND_REFERAL_MODE is True Then Fill Below Variable, If False Then No Need To Fill.
+PREMIUM_AND_REFERAL_MODE = bool(environ.get('PREMIUM_AND_REFERAL_MODE', True))
+
+REFERAL_COUNT = int(environ.get('REFERAL_COUNT', '5'))
+REFERAL_PREMEIUM_TIME = environ.get('REFERAL_PREMEIUM_TIME', '1month')
+PAYMENT_QR = environ.get('PAYMENT_QR', 'https://files.catbox.moe/tc8drk.jpg')
+PAYMENT_TEXT = environ.get(
+    'PAYMENT_TEXT',
+    '<b><blockquote>‣ 𝐏𝐑𝐄𝐌𝐈𝐔𝐌 𝐏𝐋𝐀𝐍𝐒 📝</blockquote>\n'
+    '<i>• 30Rs - 01 Week\n• 50Rs - 01 Month\n• 120Rs - 03 Months\n• 220Rs - 06 Months</i>\n\n'
+    '<blockquote>‣ 𝐏𝐋𝐀𝐍 𝐁𝐄𝐍𝐄𝐅𝐈𝐓𝐒 ✨</blockquote>\n'
+    '<i>• No Need To Verify\n• No Need To Open Links\n• Direct Files\n• Ad-Free Experience\n'
+    '• High Speed Download\n• Multiplayer Streaming Links\n• Unlimited Movies, Animes & Series\n'
+    '• 24×7 Admin Support\n• Requests Will Be Completed Within 01 Hour Of Submission If Available</i>\n\n'
+    '<blockquote>‣ 𝐔𝐏𝐈 𝐈𝐃 🆔</blockquote> - <code>neonan23@ibl</code>\n\n'
+    '<i>• Click /myplan To Check Your Plan\n• Send Screenshots After Payment\n'
+    '• After Sending Screenshot Give Us Some Time To Add You In Premium</i></b>'
+)
+
+# ============================================================
+# 🔹 CLONE SETTINGS
+# ============================================================
+# Clone Information : If Clone Mode Is True Then Bot Clone Other Bots.
+CLONE_MODE = bool(environ.get('CLONE_MODE', False)) # Set True or False
+CLONE_DATABASE_URI = environ.get('CLONE_DATABASE_URI', "") # Necessary If clone mode is true
+PUBLIC_FILE_CHANNEL = environ.get('PUBLIC_FILE_CHANNEL', 'AnimeZerox') # Public Channel Username Without @ or without https://t.me/ and Bot Is Admin With Full Right.
+
+
+# ============================================================
+# 🔹 LINKS
+# ============================================================
+GRP_LNK = environ.get('GRP_LNK', 'https://t.me/+o1s-8MppL2syYTI9')
+CHNL_LNK = environ.get('CHNL_LNK', 'https://t.me/neonfiles')
+SUPPORT_CHAT = environ.get('SUPPORT_CHAT', 'Talk2neonBot') # Support Chat Link Without https:// or @
+OWNER_LNK = environ.get('OWNER_LNK', 'https://t.me/MyselfNeon')
+
+
+# ============================================================
+# 🔹 FEATURES (True/False Switches)
+# ============================================================
+AI_SPELL_CHECK = bool(environ.get('AI_SPELL_CHECK', True))
+PM_SEARCH = bool(environ.get('PM_SEARCH', True))
+BUTTON_MODE = bool(environ.get('BUTTON_MODE', True))
+MAX_BTN = bool(environ.get('MAX_BTN', True))
+IS_TUTORIAL = bool(environ.get('IS_TUTORIAL', False))
+IMDB = bool(environ.get('IMDB', False))
+AUTO_FFILTER = bool(environ.get('AUTO_FFILTER', True))
+AUTO_DELETE = bool(environ.get('AUTO_DELETE', True))
+LONG_IMDB_DESCRIPTION = bool(environ.get("LONG_IMDB_DESCRIPTION", False))
+SPELL_CHECK_REPLY = bool(environ.get("SPELL_CHECK_REPLY", True))
+MELCOW_NEW_USERS = bool(environ.get('MELCOW_NEW_USERS', True))
+PROTECT_CONTENT = bool(environ.get('PROTECT_CONTENT', False))
+PUBLIC_FILE_STORE = bool(environ.get('PUBLIC_FILE_STORE', True))
+NO_RESULTS_MSG = bool(environ.get("NO_RESULTS_MSG", False))
+USE_CAPTION_FILTER = bool(environ.get('USE_CAPTION_FILTER', True))
+
+
+# ============================================================
+# 🔹 TOKEN VERIFICATIONS
+# ============================================================
+VERIFY = bool(environ.get('VERIFY', False))
+VERIFY_SHORTLINK_URL = environ.get('VERIFY_SHORTLINK_URL', '')
+VERIFY_SHORTLINK_API = environ.get('VERIFY_SHORTLINK_API', '')
+VERIFY_TUTORIAL = environ.get('VERIFY_TUTORIAL', '')
+
+# If You Fill Second Shortner Then Bot Attach Both First And Second Shortner And Use It For Verify.
+VERIFY_SECOND_SHORTNER = bool(environ.get('VERIFY_SECOND_SHORTNER', False))
+# if verify second shortner is True then fill below url and api
+VERIFY_SND_SHORTLINK_URL = environ.get('VERIFY_SND_SHORTLINK_URL', '')
+VERIFY_SND_SHORTLINK_API = environ.get('VERIFY_SND_SHORTLINK_API', '')
+
+
+# ============================================================
+# 🔹 SHORTLINK SETTINGS
+# ============================================================
+SHORTLINK_MODE = bool(environ.get('SHORTLINK_MODE', False))
+SHORTLINK_URL = environ.get('SHORTLINK_URL', '')
+SHORTLINK_API = environ.get('SHORTLINK_API', '')
+TUTORIAL = environ.get('TUTORIAL', '')
+
+
+# ============================================================
+# 🔹 MISCELLANEOUS SETTINGS
+# ============================================================
+CACHE_TIME = int(environ.get('CACHE_TIME', 1800))
+MAX_B_TN = environ.get("MAX_B_TN", "5")
+PORT = environ.get("PORT", "8080")
+MSG_ALRT = environ.get('MSG_ALRT', 'Powered by @NeonFiles ❤️✨')
+
+CUSTOM_FILE_CAPTION = environ.get("CUSTOM_FILE_CAPTION", f"{script.CAPTION}")
+BATCH_FILE_CAPTION = environ.get("BATCH_FILE_CAPTION", CUSTOM_FILE_CAPTION)
+IMDB_TEMPLATE = environ.get("IMDB_TEMPLATE", f"{script.IMDB_TEMPLATE_TXT}")
+MAX_LIST_ELM = environ.get("MAX_LIST_ELM", None)
+
+
+# ============================================================
+# 🔹 FILTER OPTIONS
+# ============================================================
+LANGUAGES = ["malayalam", "mal", "tamil", "tam", "english", "eng", "hindi", "hin",
+             "telugu", "tel", "kannada", "kan"]
+
+SEASONS = [f"season {i}" for i in range(1, 11)]
+
+EPISODES = [f"E{i:02}" for i in range(1, 41)]
+
+QUALITIES = ["360p", "480p", "720p", "1080p", "1440p", "2160p"]
+
+YEARS = [str(year) for year in range(1900, 2026)]
+
+
+# ============================================================
+# 🔹 STREAMING & DOWNLOAD
+# ============================================================
+STREAM_MODE = bool(environ.get('STREAM_MODE', True))
+
+# If Stream Mode Is True Then Fill All Required Variable, If False Then Don't Fill.
+MULTI_CLIENT = False
+SLEEP_THRESHOLD = int(environ.get('SLEEP_THRESHOLD', '60'))
+PING_INTERVAL = int(environ.get("PING_INTERVAL", "1200"))  # 20 min
+
+ON_HEROKU = 'DYNO' in environ
+URL = environ.get("URL", "")
+
+
+# ============================================================
+# 🔹 RENAME
+# ============================================================
+RENAME_MODE = bool(environ.get('RENAME_MODE', True)) # Set True or False
+# Rename Info : If True Then Bot Rename File Else Not
+
+# ============================================================
+# 🔹 OPENAI API SETTINGS (New Section)
+# ============================================================
+# This loads the key from an environment variable called 'OPENAI_API_KEY'.
+# It will be an empty string if the environment variable is not set.
+OPENAI_API_KEY = environ.get('OPENAI_API_KEY', "")
+
+# ============================================================
+# 🔹 AUTO APPROVE
+# ============================================================
+AUTO_APPROVE_MODE = bool(environ.get('AUTO_APPROVE_MODE', False))  # Set True or False
+# Auto Approve Info : If True Then Bot Approve New Upcoming Join Request Else Not
+
+
+# ============================================================
+# 🔹 START COMMAND REACTIONS
+# ============================================================
+REACTIONS = [
+    "🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "🤩",
+    "😱", "🤣", "😘", "👏", "😛", "😈", "🎉", "⚡️", "🫡",
+    "🤓", "😎", "🏆", "🔥", "🤭", "🌚", "🆒", "👻", "😁"]
+# Don't add unsupported emojis because Telegram reactions have limits
+
+
+# Dont remove Credits
+# Developer Telegram @MyselfNeon
+# Update channel - @NeonFiles
