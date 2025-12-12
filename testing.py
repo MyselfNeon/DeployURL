@@ -124,10 +124,7 @@ CHNL_LNK = environ.get('CHNL_LNK', 'https://t.me/neonfiles')
 SUPPORT_CHAT = environ.get('SUPPORT_CHAT', 'Talk2neonBot') # Support Chat Link Without https:// or @
 OWNER_LNK = environ.get('OWNER_LNK', 'https://t.me/MyselfNeon')
 
-
-# 
-# 🔹 FEATURES (True/False Switches)
-# 
+# --- FEATURES (True/False Switches) ---
 AI_SPELL_CHECK = bool(environ.get('AI_SPELL_CHECK', True))
 PM_SEARCH = bool(environ.get('PM_SEARCH', True))
 BUTTON_MODE = bool(environ.get('BUTTON_MODE', True))
@@ -144,34 +141,25 @@ PUBLIC_FILE_STORE = bool(environ.get('PUBLIC_FILE_STORE', True))
 NO_RESULTS_MSG = bool(environ.get("NO_RESULTS_MSG", False))
 USE_CAPTION_FILTER = bool(environ.get('USE_CAPTION_FILTER', True))
 
-
-# 
-# 🔹 TOKEN VERIFICATIONS
-# 
+# --- TOKEN VERIFICATIONS --- 
 VERIFY = bool(environ.get('VERIFY', False))
 VERIFY_SHORTLINK_URL = environ.get('VERIFY_SHORTLINK_URL', '')
 VERIFY_SHORTLINK_API = environ.get('VERIFY_SHORTLINK_API', '')
 VERIFY_TUTORIAL = environ.get('VERIFY_TUTORIAL', '')
 
-# If You Fill Second Shortner Then Bot Attach Both First And Second Shortner And Use It For Verify.
+# --- If You Fill Second Shortner Then Bot Attach Both First And Second Shortner And Use It For Verify ---
 VERIFY_SECOND_SHORTNER = bool(environ.get('VERIFY_SECOND_SHORTNER', False))
-# if verify second shortner is True then fill below url and api
+# --- if verify second shortner is True then fill below url and api ---
 VERIFY_SND_SHORTLINK_URL = environ.get('VERIFY_SND_SHORTLINK_URL', '')
 VERIFY_SND_SHORTLINK_API = environ.get('VERIFY_SND_SHORTLINK_API', '')
 
-
-# 
-# 🔹 SHORTLINK SETTINGS
-# 
+# --- SHORTLINK SETTINGS ---
 SHORTLINK_MODE = bool(environ.get('SHORTLINK_MODE', False))
 SHORTLINK_URL = environ.get('SHORTLINK_URL', '')
 SHORTLINK_API = environ.get('SHORTLINK_API', '')
 TUTORIAL = environ.get('TUTORIAL', '')
 
-
-# 
-# 🔹 MISCELLANEOUS SETTINGS
-# 
+# --- MISCELLANEOUS SETTINGS --- 
 CACHE_TIME = int(environ.get('CACHE_TIME', 1800))
 MAX_B_TN = environ.get("MAX_B_TN", "5")
 PORT = environ.get("PORT", "8080")
@@ -197,7 +185,7 @@ YEARS = [str(year) for year in range(1900, 2026)]
 # --- STREAMING & DOWNLOAD ---
 STREAM_MODE = bool(environ.get('STREAM_MODE', True))
 
-# If Stream Mode Is True Then Fill All Required Variable, If False Then Don't Fill.
+# --- If Stream Mode Is True Then Fill All Required Variable, If False Then Don't Fill ---
 MULTI_CLIENT = False
 SLEEP_THRESHOLD = int(environ.get('SLEEP_THRESHOLD', '60'))
 PING_INTERVAL = int(environ.get("PING_INTERVAL", "1200"))  # 20 min
