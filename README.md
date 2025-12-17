@@ -1,10 +1,10 @@
-## Website Monitor Bot 🌐
+### Website Monitor Bot 🌐
 
 *Advanced Automated Monitoring Bot built with Pyrogram, Flask, and MongoDB. Designed to bypass Cloudflare protections using TLS Fingerprinting **(`curl_cffi`)** to track user statuses and forum activity in real-time.*
 
 ---
 
-## ✨ Key Features
+### ✨ Key Features
 
 ### 🛡️ ***Advanced Scraping***
 * ***Cloudflare Bypass:** Uses `curl_cffi` to impersonate real browsers (Chrome 120 / Safari 17) and bypass 403 Forbidden errors.*
@@ -23,7 +23,7 @@
 
 ---
 
-## 🛠️ Tech Stack
+### 🛠️ Tech Stack
 
 * ***Python 3.10+***
 * ***Pyrogram:** Telegram MTProto API Client.*
@@ -34,7 +34,7 @@
 
 ---
 
-## 🚀 Installation
+### 🚀 Installation
 
 1.  ***Clone the Repository***
     ```bash
@@ -76,7 +76,7 @@
 
 ---
 
-## 🎮 Commands
+### 🎮 Commands
 
 | Command | Description | Permission |
 | :--- | :--- | :--- |
@@ -96,7 +96,7 @@
 
 ---
 
-## 🌐 Deployment (Render/Railway)
+### 🌐 Deployment (Render/Railway)
 
 This bot is optimized for cloud deployment.
 
@@ -106,13 +106,13 @@ This bot is optimized for cloud deployment.
 
 ---
 
-## ⚠️ Disclaimer
+### ⚠️ Disclaimer
 
 ***This tool is for **educational purposes only**. The scraping mechanism includes delays to be respectful to the target server. The author is not responsible for any misuse or IP bans resulting from the use of this bot.***
 
 ---
 
-## ❤️ Credits
+### ❤️ Credits
 
 **Developer:** [MyselfNeon](https://t.me/MyselfNeon)  
 **GitHub:** [MyselfNeon](https://github.com/MyselfNeon/)
