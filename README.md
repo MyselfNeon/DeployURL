@@ -1,25 +1,25 @@
-# 🌐 Website Monitor Bot (Neon Edition)
+## Website Monitor Bot 🌐
 
-**Advanced Automated Monitoring Bot** built with **Pyrogram**, **Flask**, and **MongoDB**. Designed to bypass Cloudflare protections using **TLS Fingerprinting** (`curl_cffi`) to track user statuses and forum activity in real-time.
+*Advanced Automated Monitoring Bot built with Pyrogram, Flask, and MongoDB. Designed to bypass Cloudflare protections using TLS Fingerprinting **(`curl_cffi`)** to track user statuses and forum activity in real-time.*
 
 ---
 
 ## ✨ Key Features
 
-### 🛡️ **Advanced Scraping**
-* **Cloudflare Bypass:** Uses `curl_cffi` to impersonate real browsers (Chrome 120 / Safari 17) and bypass 403 Forbidden errors.
-* **Smart Throttling:** Implements random delays (`REQUEST_DELAY`) and session rotation to mimic human behavior.
-* **Auto-Warmup:** "Warms up" sessions by visiting homepages before scraping specific targets.
+### 🛡️ ***Advanced Scraping***
+* ***Cloudflare Bypass:** Uses `curl_cffi` to impersonate real browsers (Chrome 120 / Safari 17) and bypass 403 Forbidden errors.*
+* ***Smart Throttling:** Implements random delays (`REQUEST_DELAY`) and session rotation to mimic human behavior.*
+* ***Auto-Warmup:** "Warms up" sessions by visiting homepages before scraping specific targets.*
 
 ### 📊 **Data & Analytics**
-* **MongoDB Database:** Persistent storage for targets, authorization, and activity logs (replaces JSON).
-* **Activity Graphs:** Generates hourly activity graphs for tracked users via `/activity` (7-day history retention).
-* **IST Time Support:** Automatically converts server time to Indian Standard Time (IST) for status reports.
+* ***MongoDB Database:** Persistent storage for targets, authorization, and activity logs (replaces JSON).*
+* ***Activity Graphs:** Generates hourly activity graphs for tracked users via `/activity` (7-day history retention).*
+* ***IST Time Support:** Automatically converts server time to Indian Standard Time (IST) for status reports.*
 
 ### 🤖 **Bot Management**
-* **Dynamic Configuration:** Add or remove users/forums directly via Telegram commands—no code edits required.
-* **Owner Security:** Strict `OWNER_ID` and Admin Authorization system (`/auth`) to prevent unauthorized access.
-* **Web Dashboard:** Integrated Flask server with a "Neon" themed health-check page and Keep-Alive support.
+* ***Dynamic Configuration:** Add or remove users/forums directly via Telegram commands—no code edits required.*
+* ***Owner Security:** Strict `OWNER_ID` and Admin Authorization system (`/auth`) to prevent unauthorized access.*
+* ***Web Dashboard:** Integrated Flask server with a "Neon" themed health-check page and Keep-Alive support.*
 
 ---
 
