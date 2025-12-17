@@ -1,217 +1,118 @@
-import re
-from os import environ
-from Script import script 
- 
-# --- REGEX PATTERN ---
-id_pattern = re.compile(r'^.\d+$')
+# 🌐 Website Monitor Bot (Neon Edition)
 
-# --- BOT INFORMATION ---
-SESSION = environ.get('SESSION', 'MyselfNeon')
-API_ID = int(environ.get('API_ID', ''))
-API_HASH = environ.get('API_HASH', '')
-BOT_TOKEN = environ.get('BOT_TOKEN', "")
+**Advanced Automated Monitoring Bot** built with **Pyrogram**, **Flask**, and **MongoDB**. Designed to bypass Cloudflare protections using **TLS Fingerprinting** (`curl_cffi`) to track user statuses and forum activity in real-time.
 
-# --- KEEP-ALIVE URL ---
-KEEP_ALIVE_URL = environ.get("KEEP_ALIVE_URL", "")  # <-- Add this line
+---
 
-# --- START PICTURES --- 
-# (Add Multiple By Giving One Space Between Each)
-PICS = (
-    environ.get(
-        'PICS',
-        'https://files.catbox.moe/ybg6gw.jpg '
-        'https://files.catbox.moe/b5a3dz.jpg '
-        'https://files.catbox.moe/n0xw7h.jpg '
-        'https://files.catbox.moe/fhexii.jpg '
-        'https://files.catbox.moe/v7w8co.jpg '
-        'https://files.catbox.moe/r946bu.jpg'
-    )
-).split()
+## ✨ Key Features
 
-# --- ADMINS & USERS ---
-ADMINS = [int(admin) if id_pattern.search(admin) else admin
-          for admin in environ.get('ADMINS', '841851780').split()]  # Multiple IDs separated by space
+### 🛡️ **Advanced Scraping**
+* **Cloudflare Bypass:** Uses `curl_cffi` to impersonate real browsers (Chrome 120 / Safari 17) and bypass 403 Forbidden errors.
+* **Smart Throttling:** Implements random delays (`REQUEST_DELAY`) and session rotation to mimic human behavior.
+* **Auto-Warmup:** "Warms up" sessions by visiting homepages before scraping specific targets.
 
-auth_users = [int(user) if id_pattern.search(user) else user
-              for user in environ.get('AUTH_USERS', '').split()]  # Multiple IDs separated by space
+### 📊 **Data & Analytics**
+* **MongoDB Database:** Persistent storage for targets, authorization, and activity logs (replaces JSON).
+* **Activity Graphs:** Generates hourly activity graphs for tracked users via `/activity` (7-day history retention).
+* **IST Time Support:** Automatically converts server time to Indian Standard Time (IST) for status reports.
 
-AUTH_USERS = (auth_users + ADMINS) if auth_users else []
+### 🤖 **Bot Management**
+* **Dynamic Configuration:** Add or remove users/forums directly via Telegram commands—no code edits required.
+* **Owner Security:** Strict `OWNER_ID` and Admin Authorization system (`/auth`) to prevent unauthorized access.
+* **Web Dashboard:** Integrated Flask server with a "Neon" themed health-check page and Keep-Alive support.
 
-# --- CHANNELS AND GROUPS ---
-LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-1001889915480'))
-# This Channel Is For When User Start Your Bot Then Bot Send That User Name And Id In This Log Channel, Same For Group Also.
+---
 
-CHANNELS = [int(ch) if id_pattern.search(ch) else ch
-            for ch in environ.get('CHANNELS', '-1002627138181 -1002487845241').split()]
-# This Is File Channel Where You Upload Your File Then Bot Automatically Save It In Database
+## 🛠️ Tech Stack
 
-REQUEST_TO_JOIN_MODE = bool(environ.get('REQUEST_TO_JOIN_MODE', False))  # True → request to join FSUB
-TRY_AGAIN_BTN = bool(environ.get('TRY_AGAIN_BTN', False))                # Retry button for FSUB
+* **Python 3.10+**
+* **Pyrogram:** Telegram MTProto API Client.
+* **Motor:** Asynchronous MongoDB driver.
+* **Curl_CFFI:** TLS Fingerprinting for scraping.
+* **Flask:** Web server for deployment health checks.
+* **BeautifulSoup4:** HTML Parsing.
 
-# --- FORCE SUBSCRIBE CHANNEL ---
-auth_channel = environ.get('AUTH_CHANNEL', '-1002384933640')
-AUTH_CHANNEL = int(auth_channel) if auth_channel and id_pattern.search(auth_channel) else None
+---
 
-# --- FILE REQUEST CHANNEL ---
-reqst_channel = environ.get('REQST_CHANNEL', '-1002158258466')
-REQST_CHANNEL = int(reqst_channel) if reqst_channel and id_pattern.search(reqst_channel) else None
+## 🚀 Installation
 
-# --- INDEX REQUEST CHANNEL ---
-INDEX_REQ_CHANNEL = int(environ.get('INDEX_REQ_CHANNEL', LOG_CHANNEL))
+1.  **Clone the Repository**
+    ```bash
+    git clone [https://github.com/MyselfNeon/Website-Monitor.git](https://github.com/MyselfNeon/Website-Monitor.git)
+    cd Website-Monitor
+    ```
 
-# --- BOT SUPPORT GROUP ---
-support_chat_id = environ.get('SUPPORT_CHAT_ID', '')
-SUPPORT_CHAT_ID = int(support_chat_id) if support_chat_id and id_pattern.search(support_chat_id) else None
+2.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-# --- FILE STORE CHANNEL ---
-FILE_STORE_CHANNEL = [int(ch) for ch in (environ.get('FILE_STORE_CHANNEL', '-1002487845241')).split()]
+3.  **Set Up Environment Variables**
+    Create a `.env` file in the root directory and add the following:
 
-# --- DELETE CHANNEL(s) ---
-DELETE_CHANNELS = [int(dch) if id_pattern.search(dch) else dch
-                   for dch in environ.get('DELETE_CHANNELS', '-1002231967338').split()]
- 
-# --- DATABASE --- 
-DATABASE_URI = environ.get('DATABASE_URI', "")
-DATABASE_NAME = environ.get('DATABASE_NAME', "NeonFilter")
-COLLECTION_NAME = environ.get('COLLECTION_NAME', 'neoncollection')
+    ```ini
+    # Telegram API (my.telegram.org)
+    API_ID=123456
+    API_HASH=your_api_hash
+    BOT_TOKEN=your_bot_token
 
-MULTIPLE_DATABASE = bool(environ.get('MULTIPLE_DATABASE', False))
+    # Admin Configuration
+    OWNER_ID=123456789,987654321
 
-# --- Separate DBs if MULTIPLE_DATABASE = True ---
-O_DB_URI = environ.get('O_DB_URI', "")  # This Db Is For Other Data Store
-F_DB_URI = environ.get('F_DB_URI', "")  # This Db Is For File Data Store
-S_DB_URI = environ.get('S_DB_URI', "")  # This Db is for File Data Store When First Db Is Going To Be Full
+    # Database (MongoDB Connection String)
+    DB_URI=mongodb+srv://user:pass@cluster.mongodb.net/?retryWrites=true&w=majority
+    DB_NAME=PMT-Testing
 
-if not MULTIPLE_DATABASE:
-    USER_DB_URI = OTHER_DB_URI = FILE_DB_URI = SEC_FILE_DB_URI = DATABASE_URI
-else:
-    USER_DB_URI = DATABASE_URI
-    OTHER_DB_URI = O_DB_URI
-    FILE_DB_URI = F_DB_URI
-    SEC_FILE_DB_URI = S_DB_URI
- 
-# --- PREMIUM AND REFERAL ---
-PREMIUM_AND_REFERAL_MODE = bool(environ.get('PREMIUM_AND_REFERAL_MODE', True)) # Set Ture Or False
+    # Application Settings
+    MIN_CHECK_INTERVAL=60
+    MAX_CHECK_INTERVAL=120
+    PORT=8080
+    ```
 
-# --- If PREMIUM_AND_REFERAL_MODE is True Then Fill Below Variable, If False Then No Need To Fill ---
-PREMIUM_AND_REFERAL_MODE = bool(environ.get('PREMIUM_AND_REFERAL_MODE', True))
+4.  **Run the Bot**
+    ```bash
+    python main.py
+    ```
 
-REFERAL_COUNT = int(environ.get('REFERAL_COUNT', '5'))
-REFERAL_PREMEIUM_TIME = environ.get('REFERAL_PREMEIUM_TIME', '1month')
-PAYMENT_QR = environ.get('PAYMENT_QR', 'https://files.catbox.moe/tc8drk.jpg')
-PAYMENT_TEXT = environ.get(
-    'PAYMENT_TEXT',
-    '<b><blockquote>‣ 𝐏𝐑𝐄𝐌𝐈𝐔𝐌 𝐏𝐋𝐀𝐍𝐒 📝</blockquote>\n'
-    '<i>• 30Rs - 01 Week\n• 50Rs - 01 Month\n• 120Rs - 03 Months\n• 220Rs - 06 Months</i>\n\n'
-    '<blockquote>‣ 𝐏𝐋𝐀𝐍 𝐁𝐄𝐍𝐄𝐅𝐈𝐓𝐒 ✨</blockquote>\n'
-    '<i>• No Need To Verify\n• No Need To Open Links\n• Direct Files\n• Ad-Free Experience\n'
-    '• High Speed Download\n• Multiplayer Streaming Links\n• Unlimited Movies, Animes & Series\n'
-    '• 24×7 Admin Support\n• Requests Will Be Completed Within 01 Hour Of Submission If Available</i>\n\n'
-    '<blockquote>‣ 𝐔𝐏𝐈 𝐈𝐃 🆔</blockquote> - <code>neonan23@ibl</code>\n\n'
-    '<i>• Click /myplan To Check Your Plan\n• Send Screenshots After Payment\n'
-    '• After Sending Screenshot Give Us Some Time To Add You In Premium</i></b>'
-)
+---
 
-# --- CLONE SETTINGS ---
-# Clone Information : If Clone Mode Is True Then Bot Clone Other Bots.
-CLONE_MODE = bool(environ.get('CLONE_MODE', False)) # Set True or False
-CLONE_DATABASE_URI = environ.get('CLONE_DATABASE_URI', "") # Necessary If clone mode is true
-PUBLIC_FILE_CHANNEL = environ.get('PUBLIC_FILE_CHANNEL', 'AnimeZerox') # Public Channel Username Without @ or without https://t.me/ and Bot Is Admin With Full Right.
+## 🎮 Commands
 
-# --- LINKS --- 
-GRP_LNK = environ.get('GRP_LNK', 'https://t.me/+o1s-8MppL2syYTI9')
-CHNL_LNK = environ.get('CHNL_LNK', 'https://t.me/neonfiles')
-SUPPORT_CHAT = environ.get('SUPPORT_CHAT', 'Talk2neonBot') # Support Chat Link Without https:// or @
-OWNER_LNK = environ.get('OWNER_LNK', 'https://t.me/MyselfNeon')
+| Command | Description | Permission |
+| :--- | :--- | :--- |
+| `/start` | Check bot status and get your Chat ID. | Public |
+| `/check` | Force a manual scrape and get a summary report. | Auth/Owner |
+| `/add_user <Name> <URL>` | Add a user profile to the tracking list. | Owner |
+| `/del_user <Name>` | Remove a user from the tracking list. | Owner |
+| `/add_forum <Name> <URL>` | Add a forum section to monitor for new threads. | Owner |
+| `/del_forum <Name>` | Remove a forum from the tracking list. | Owner |
+| `/activity <Name>` | Generate an hourly activity graph for a user. | Owner |
+| `/list` | Show all tracked users, forums, and authorized IDs. | Owner |
+| `/auth <UID>` | Authorize a user to receive alerts and use `/check`. | Owner |
+| `/unauth <UID>` | Revoke authorization from a user. | Owner |
+| `/restart` | Restart the bot process remotely. | Owner |
 
-# --- FEATURES (True/False Switches) ---
-AI_SPELL_CHECK = bool(environ.get('AI_SPELL_CHECK', True))
-PM_SEARCH = bool(environ.get('PM_SEARCH', True))
-BUTTON_MODE = bool(environ.get('BUTTON_MODE', True))
-MAX_BTN = bool(environ.get('MAX_BTN', True))
-IS_TUTORIAL = bool(environ.get('IS_TUTORIAL', False))
-IMDB = bool(environ.get('IMDB', False))
-AUTO_FFILTER = bool(environ.get('AUTO_FFILTER', True))
-AUTO_DELETE = bool(environ.get('AUTO_DELETE', True))
-LONG_IMDB_DESCRIPTION = bool(environ.get("LONG_IMDB_DESCRIPTION", False))
-SPELL_CHECK_REPLY = bool(environ.get("SPELL_CHECK_REPLY", True))
-MELCOW_NEW_USERS = bool(environ.get('MELCOW_NEW_USERS', True))
-PROTECT_CONTENT = bool(environ.get('PROTECT_CONTENT', False))
-PUBLIC_FILE_STORE = bool(environ.get('PUBLIC_FILE_STORE', True))
-NO_RESULTS_MSG = bool(environ.get("NO_RESULTS_MSG", False))
-USE_CAPTION_FILTER = bool(environ.get('USE_CAPTION_FILTER', True))
+*Note: Unauthorized users trying to access protected commands will receive an "Access Denied" animation.*
 
-# --- TOKEN VERIFICATIONS --- 
-VERIFY = bool(environ.get('VERIFY', False))
-VERIFY_SHORTLINK_URL = environ.get('VERIFY_SHORTLINK_URL', '')
-VERIFY_SHORTLINK_API = environ.get('VERIFY_SHORTLINK_API', '')
-VERIFY_TUTORIAL = environ.get('VERIFY_TUTORIAL', '')
+---
 
-# --- If You Fill Second Shortner Then Bot Attach Both First And Second Shortner And Use It For Verify ---
-VERIFY_SECOND_SHORTNER = bool(environ.get('VERIFY_SECOND_SHORTNER', False))
-# --- if verify second shortner is True then fill below url and api ---
-VERIFY_SND_SHORTLINK_URL = environ.get('VERIFY_SND_SHORTLINK_URL', '')
-VERIFY_SND_SHORTLINK_API = environ.get('VERIFY_SND_SHORTLINK_API', '')
+## 🌐 Deployment (Render/Railway)
 
-# --- SHORTLINK SETTINGS ---
-SHORTLINK_MODE = bool(environ.get('SHORTLINK_MODE', False))
-SHORTLINK_URL = environ.get('SHORTLINK_URL', '')
-SHORTLINK_API = environ.get('SHORTLINK_API', '')
-TUTORIAL = environ.get('TUTORIAL', '')
+This bot is optimized for cloud deployment.
 
-# --- MISCELLANEOUS SETTINGS --- 
-CACHE_TIME = int(environ.get('CACHE_TIME', 1800))
-MAX_B_TN = environ.get("MAX_B_TN", "5")
-PORT = environ.get("PORT", "8080")
-MSG_ALRT = environ.get('MSG_ALRT', 'Powered by @NeonFiles ❤️✨')
+1.  **Flask Keep-Alive:** The bot runs a web server on `0.0.0.0` (Port 8080 by default).
+2.  **Health Check:** Accessing the root URL (`/`) displays a styled Neon HTML page confirming the bot is online.
+3.  **Self-Pinging:** Configure `KEEP_ALIVE_URL` in `main.py` (or via env vars) to ping itself every 5 minutes to prevent sleeping.
 
-CUSTOM_FILE_CAPTION = environ.get("CUSTOM_FILE_CAPTION", f"{script.CAPTION}")
-BATCH_FILE_CAPTION = environ.get("BATCH_FILE_CAPTION", CUSTOM_FILE_CAPTION)
-IMDB_TEMPLATE = environ.get("IMDB_TEMPLATE", f"{script.IMDB_TEMPLATE_TXT}")
-MAX_LIST_ELM = environ.get("MAX_LIST_ELM", None)
+---
 
-# --- FILTER OPTIONS ---
-LANGUAGES = ["malayalam", "mal", "tamil", "tam", "english", "eng", "hindi", "hin",
-             "telugu", "tel", "kannada", "kan"]
+## ⚠️ Disclaimer
 
-SEASONS = [f"season {i}" for i in range(1, 11)]
+This tool is for **educational purposes only**. The scraping mechanism includes delays to be respectful to the target server. The author is not responsible for any misuse or IP bans resulting from the use of this bot.
 
-EPISODES = [f"E{i:02}" for i in range(1, 41)]
+---
 
-QUALITIES = ["360p", "480p", "720p", "1080p", "1440p", "2160p"]
+## ❤️ Credits
 
-YEARS = [str(year) for year in range(1900, 2026)]
-
-# --- STREAMING & DOWNLOAD ---
-STREAM_MODE = bool(environ.get('STREAM_MODE', True))
-
-# --- If Stream Mode Is True Then Fill All Required Variable, If False Then Don't Fill ---
-MULTI_CLIENT = False
-SLEEP_THRESHOLD = int(environ.get('SLEEP_THRESHOLD', '60'))
-PING_INTERVAL = int(environ.get("PING_INTERVAL", "1200"))  # 20 min
-
-ON_HEROKU = 'DYNO' in environ
-URL = environ.get("URL", "")
-
-# --- RENAME ---
-RENAME_MODE = bool(environ.get('RENAME_MODE', True)) # Set True or False
-# Rename Info : If True Then Bot Rename File Else Not
-
-# --- OPENAI API SETTINGS ---
-OPENAI_API_KEY = environ.get('OPENAI_API_KEY', "")
-
-# --- AUTO APPROVE ---
-AUTO_APPROVE_MODE = bool(environ.get('AUTO_APPROVE_MODE', False))  # Set True or False
-# Auto Approve Info : If True Then Bot Approve New Upcoming Join Request Else Not
-
-# --- START COMMAND REACTIONS ---
-REACTIONS = [
-    "🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "🤩",
-    "😱", "🤣", "😘", "👏", "😛", "😈", "🎉", "⚡️", "🫡",
-    "🤓", "😎", "🏆", "🔥", "🤭", "🌚", "🆒", "👻", "😁"]
-# Don't add unsupported emojis because Telegram reactions have limits
-
-
-# Dont remove Credits
-# Developer Telegram @MyselfNeon
-# Update channel - @NeonFiles
+**Developer:** [MyselfNeon](https://t.me/MyselfNeon)  
+**GitHub:** [MyselfNeon](https://github.com/MyselfNeon/)
