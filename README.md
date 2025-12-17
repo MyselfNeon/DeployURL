@@ -25,30 +25,30 @@
 
 ## 🛠️ Tech Stack
 
-* **Python 3.10+**
-* **Pyrogram:** Telegram MTProto API Client.
-* **Motor:** Asynchronous MongoDB driver.
-* **Curl_CFFI:** TLS Fingerprinting for scraping.
-* **Flask:** Web server for deployment health checks.
-* **BeautifulSoup4:** HTML Parsing.
+* ***Python 3.10+***
+* ***Pyrogram:** Telegram MTProto API Client.*
+* ***Motor:** Asynchronous MongoDB driver.*
+* ***Curl_CFFI:** TLS Fingerprinting for scraping.*
+* ***Flask:** Web server for deployment health checks.*
+* ***BeautifulSoup4:** HTML Parsing.*
 
 ---
 
 ## 🚀 Installation
 
-1.  **Clone the Repository**
+1.  ***Clone the Repository***
     ```bash
     git clone [https://github.com/MyselfNeon/Website-Monitor.git](https://github.com/MyselfNeon/Website-Monitor.git)
     cd Website-Monitor
     ```
 
-2.  **Install Dependencies**
+2.  ***Install Dependencies***
     ```bash
     pip install -r requirements.txt
     ```
 
-3.  **Set Up Environment Variables**
-    Create a `.env` file in the root directory and add the following:
+3.  ***Set Up Environment Variables***
+    *Create a `.env` file in the root directory and add the following:*
 
     ```ini
     # Telegram API (my.telegram.org)
@@ -69,7 +69,7 @@
     PORT=8080
     ```
 
-4.  **Run the Bot**
+4.  ***Run the Bot***
     ```bash
     python main.py
     ```
@@ -108,7 +108,7 @@ This bot is optimized for cloud deployment.
 
 ## ⚠️ Disclaimer
 
-This tool is for **educational purposes only**. The scraping mechanism includes delays to be respectful to the target server. The author is not responsible for any misuse or IP bans resulting from the use of this bot.
+***This tool is for **educational purposes only**. The scraping mechanism includes delays to be respectful to the target server. The author is not responsible for any misuse or IP bans resulting from the use of this bot.***
 
 ---
 
