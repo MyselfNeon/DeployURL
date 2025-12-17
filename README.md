@@ -98,11 +98,11 @@
 
 ### 🌐 Deployment (Render/Railway)
 
-This bot is optimized for cloud deployment.
+***This bot is optimized for cloud deployment.***
 
-1.  **Flask Keep-Alive:** The bot runs a web server on `0.0.0.0` (Port 8080 by default).
-2.  **Health Check:** Accessing the root URL (`/`) displays a styled Neon HTML page confirming the bot is online.
-3.  **Self-Pinging:** Configure `KEEP_ALIVE_URL` in `main.py` (or via env vars) to ping itself every 5 minutes to prevent sleeping.
+1.  ***Flask Keep-Alive:** The bot runs a web server on `0.0.0.0` (Port 8080 by default).*
+2.  ***Health Check:** Accessing the root URL (`/`) displays a styled Neon HTML page confirming the bot is online.*
+3.  ***Self-Pinging:** Configure `KEEP_ALIVE_URL` in `main.py` (or via env vars) to ping itself every 5 minutes to prevent sleeping.*
 
 ---
 
