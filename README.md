@@ -76,6 +76,37 @@
 
 ---
 
+#### *Config Variables ➠*
+
+<details><summary><b><i>ENV Variables</i></summary></b></summary>
+
+#### *Mandatory Variables ➠*
+
+* [`API_ID`]: ***From [My Telegram](https://my.telegram.org).***
+* [`API_HASH`]: ***From [My Telegram](https://my.telegram.org).***
+* [`ADMIN`]: ***Your Telegram User ID. Get From [@MissRose_Bot](https://t.me/MissRose_Bot)***
+* [`BOT_TOKEN`]: ***Telegram API Bot Token, Get it from [@BotFather](https://t.me/BotFather).***
+* [`DB_NAME`]: ***DataBase Name Optional. Default to UptimeBot.***
+* [`DB_URI`]: ***[MongoDB URI](https://cloud.mongodb.com) for Saving Urls and History by User.***
+* [`PORT`]: ***Web Server Port. Optional Defaults to `8080`.***
+
+</details>
+
+#### *Bot Commands ➠* 
+
+<details><summary><b><i>Bot Commands</i></b></summary>
+  
+```
+start - Check Bot Status and get you Unique Chat ID
+add - Start monitoring a URL (Usage: /add [https://google.com](https://google.com))
+del - Stop monitoring a URL (Usage: /del [https://google.com](https://google.com))
+check - View Live Dashboard with Latency & Uptime %
+time - [Admin Only] Change Global Monitoring Interval
+```
+<b><i>⪼ Copy all Commands and paste it in <a href='https://t.me/botfather'>BotFather</a> to apply Commands.
+
+</details>
+
 ### 🎮 Commands
 
 | Command | Description | Permission |
