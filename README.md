@@ -1,6 +1,6 @@
 ### Website Monitor Bot 🌐
 
-*Advanced Automated Monitoring Bot built with Pyrogram, Flask, and MongoDB. Designed to bypass Cloudflare protections using TLS Fingerprinting **(`curl_cffi`)** to track user statuses and forum activity in real-time.*
+***Advanced Automated Monitoring Bot built with Pyrogram, Flask, and MongoDB. Designed to bypass Cloudflare protections using TLS Fingerprinting **(`curl_cffi`)** to track user statuses and forum activity in real-time.***
 
 ---
 
@@ -21,8 +21,6 @@
 * ***Owner Security:** Strict `OWNER_ID` and Admin Authorization system (`/auth`) to prevent unauthorized access.*
 * ***Web Dashboard:** Integrated Flask server with a "Neon" themed health-check page and Keep-Alive support.*
 
----
-
 ### 🛠️ Tech Stack
 
 * ***Python 3.10+***
@@ -32,9 +30,9 @@
 * ***Flask:** Web server for deployment health checks.*
 * ***BeautifulSoup4:** HTML Parsing.*
 
----
-
 ### 🚀 Installation
+
+<details><summary><b><i>Installation Guide</i></summary></b>
 
 1.  ***Clone the Repository***
     ```bash
@@ -74,11 +72,11 @@
     python main.py
     ```
 
----
+</details>
 
-#### *Config Variables ➠*
+### *Config Variables ➠*
 
-<details><summary><b><i>ENV Variables</i></summary></b></summary>
+<details><summary><b><i>ENV Variables</i></summary></b>
 
 #### *Mandatory Variables ➠*
 
@@ -92,7 +90,7 @@
 
 </details>
 
-#### *Bot Commands ➠* 
+### *Bot Commands ➠* 
 
 <details><summary><b><i>Bot Commands</i></b></summary>
   
@@ -109,39 +107,17 @@ auth <UID> - Authorize a user to receive alerts and use /check.
 unauth <UID> - Revoke authorization from a user.
 restart - Restart the bot process remotely
 ```
-<b><i>⪼ Copy all Commands and paste it in <a href='https://t.me/botfather'>BotFather</a> to apply Commands.
+<b><i>• Copy all Commands and paste it in <a href='https://t.me/botfather'>BotFather</a> to apply Commands.
 
 </details>
 
-### 🎮 Commands
-
-| Command | Description | Permission |
-| :--- | :--- | :--- |
-| `/start` | Check bot status and get your Chat ID. | Public |
-| `/check` | Force a manual scrape and get a summary report. | Auth/Owner |
-| `/add_user <Name> <URL>` | Add a user profile to the tracking list. | Owner |
-| `/del_user <Name>` | Remove a user from the tracking list. | Owner |
-| `/add_forum <Name> <URL>` | Add a forum section to monitor for new threads. | Owner |
-| `/del_forum <Name>` | Remove a forum from the tracking list. | Owner |
-| `/activity <Name>` | Generate an hourly activity graph for a user. | Owner |
-| `/list` | Show all tracked users, forums, and authorized IDs. | Owner |
-| `/auth <UID>` | Authorize a user to receive alerts and use `/check`. | Owner |
-| `/unauth <UID>` | Revoke authorization from a user. | Owner |
-| `/restart` | Restart the bot process remotely. | Owner |
-
-*Note: Unauthorized users trying to access protected commands will receive an "Access Denied" animation.*
-
----
-
-### 🌐 Deployment (Render/Railway)
+### 🌐 Cloud Deployment
 
 ***This bot is optimized for cloud deployment.***
 
 1.  ***Flask Keep-Alive:** The bot runs a web server on `0.0.0.0` (Port 8080 by default).*
 2.  ***Health Check:** Accessing the root URL (`/`) displays a styled Neon HTML page confirming the bot is online.*
 3.  ***Self-Pinging:** Configure `KEEP_ALIVE_URL` in `main.py` (or via env vars) to ping itself every 5 minutes to prevent sleeping.*
-
----
 
 ### ⚠️ Disclaimer
 
