@@ -97,11 +97,17 @@
 <details><summary><b><i>Bot Commands</i></b></summary>
   
 ```
-start - Check Bot Status and get you Unique Chat ID
-add - Start monitoring a URL (Usage: /add [https://google.com](https://google.com))
-del - Stop monitoring a URL (Usage: /del [https://google.com](https://google.com))
-check - View Live Dashboard with Latency & Uptime %
-time - [Admin Only] Change Global Monitoring Interval
+start - Check bot status and get your Chat ID
+check -  Force a manual scrape and get a summary report
+add_user <Name> <URL> - Add a user profile to the tracking list
+del_user <Name> - Remove a user from the tracking list
+add_forum <Name> <URL> - Add a forum section to monitor for new threads
+del_forum <Name> - Remove a forum from the tracking list
+activity <Name> - Generate an hourly activity graph for a user
+list - Show all tracked users, forums, and authorized IDs.
+auth <UID> - Authorize a user to receive alerts and use /check.
+unauth <UID> - Revoke authorization from a user.
+restart - Restart the bot process remotely
 ```
 <b><i>⪼ Copy all Commands and paste it in <a href='https://t.me/botfather'>BotFather</a> to apply Commands.
 
