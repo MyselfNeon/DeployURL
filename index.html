@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocoyo Style Animation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        /* --- CONTROL PANEL STYLES --- */
+        .controls {
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+        
+        input[type="text"] {
+            padding: 10px;
+            width: 250px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #0099ff; /* Pocoyo Blue */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #0077cc;
+        }
+
+        /* --- ANIMATION SCENE --- */
+        .scene-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden; /* Hides character before he enters */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* The Image User Uploads */
+        .target-image-wrapper {
+            position: relative;
+            z-index: 1;
+            transition: transform 0.1s;
+        }
+
+        .target-image {
+            width: 150px; /* Starts small in distance */
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            /* Initial State */
+            transform: scale(0.8); 
+            opacity: 0;
+        }
+
+        /* The Character (Pocoyo) */
+        .character {
+            position: absolute;
+            bottom: 50px;
+            right: -200px; /* Starts off-screen to the right */
+            width: 180px;
+            z-index: 10;
+        }
+
+        /* Hearts Container */
+        .hearts {
+            position: absolute;
+            top: -60px;
+            right: -30px;
+            font-size: 40px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* --- ANIMATIONS --- */
+        
+        /* 1. Scene Zoom: The whole container scales up slightly to simulate camera zoom */
+        .animate-zoom .target-image {
+            animation: imageAppear 3s forwards;
+        }
+
+        @keyframes imageAppear {
+            0% { transform: scale(0.5); opacity: 0; }
+            20% { opacity: 1; }
+            100% { transform: scale(1.5); opacity: 1; } /* Final Zoom Level */
+        }
+
+        /* 2. Character Run: Slides in from right to center */
+        .animate-run {
+            animation: runIn 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        @keyframes runIn {
+            0% { right: -200px; transform: scaleX(1); } /* Facing Left */
+            100% { right: 45%; transform: scaleX(1); }
+        }
+
+        /* 3. Hearts Pop: Appear at the end */
+        .animate-hearts {
+            animation: popHearts 0.5s ease-out 2.5s forwards; /* 2.5s delay matches run */
+        }
+
+        @keyframes popHearts {
+            0% { transform: translateY(20px) scale(0); opacity: 0; }
+            60% { transform: translateY(-10px) scale(1.2); opacity: 1; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <input type="text" id="imgInput" placeholder="Paste Image URL here..." value="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400">
+        <button onclick="playAnimation()">Play Animation</button>
+    </div>
+
+    <div class="scene-container" id="scene">
+        
+        <div class="target-image-wrapper">
+            <img src="" id="targetImg" class="target-image">
+            <div class="hearts" id="hearts">❤️❤️❤️</div>
+        </div>
+
+        <img src="https://media.tenor.com/yFC0s_N-tQcAAAAi/pocoyo-running.gif" id="char" class="character" alt="Character">
+        
+    </div>
+
+    <script>
+        function playAnimation() {
+            // 1. Get Elements
+            const targetImg = document.getElementById('targetImg');
+            const char = document.getElementById('char');
+            const hearts = document.getElementById('hearts');
+            const inputUrl = document.getElementById('imgInput').value;
+
+            // 2. Set the user's image URL
+            if(inputUrl.trim() !== "") {
+                targetImg.src = inputUrl;
+            } else {
+                alert("Please enter a valid image URL!");
+                return;
+            }
+
+            // 3. Reset Animations (Magic trick: remove class, force reflow, add class)
+            targetImg.classList.remove('animate-zoom'); // Reset Image
+            char.classList.remove('animate-run');       // Reset Character
+            hearts.classList.remove('animate-hearts');  // Reset Hearts
+
+            // Force browser to realize changes (Reflow)
+            void targetImg.offsetWidth; 
+
+            // 4. Start Animations
+            targetImg.classList.add('animate-zoom');
+            char.classList.add('animate-run');
+            hearts.classList.add('animate-hearts');
+        }
+
+        // Run once on load to show demo
+        window.onload = playAnimation;
+    </script>
+
+</body>
+</html>
