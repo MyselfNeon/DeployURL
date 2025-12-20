@@ -1,118 +1,143 @@
-# 🌐 Website Monitor Bot (Neon Edition)
+import random
+import string
+import requests
+import aiohttp
+from datetime import datetime, timedelta
 
-**Advanced Automated Monitoring Bot** built with **Pyrogram**, **Flask**, and **MongoDB**. Designed to bypass Cloudflare protections using **TLS Fingerprinting** (`curl_cffi`) to track user statuses and forum activity in real-time.
+from motor.motor_asyncio import AsyncIOMotorClient
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
----
+from MyselfNeon import app
+from MyselfNeon.core.func import *
+from config import MONGO_DB, WEBSITE_URL, AD_API, LOG_GROUP
 
-## ✨ Key Features
+# --- DATABASE & GLOBALS ---
+tclient = AsyncIOMotorClient(MONGO_DB)
+tdb = tclient["telegram_bot"]
+token = tdb["tokens"]
 
-### 🛡️ **Advanced Scraping**
-* **Cloudflare Bypass:** Uses `curl_cffi` to impersonate real browsers (Chrome 120 / Safari 17) and bypass 403 Forbidden errors.
-* **Smart Throttling:** Implements random delays (`REQUEST_DELAY`) and session rotation to mimic human behavior.
-* **Auto-Warmup:** "Warms up" sessions by visiting homepages before scraping specific targets.
+Param = {}
 
-### 📊 **Data & Analytics**
-* **MongoDB Database:** Persistent storage for targets, authorization, and activity logs (replaces JSON).
-* **Activity Graphs:** Generates hourly activity graphs for tracked users via `/activity` (7-day history retention).
-* **IST Time Support:** Automatically converts server time to Indian Standard Time (IST) for status reports.
+# --- HELPER FUNCTIONS ---
+async def create_ttl_index():
+    """Create a Time-To-Live index for tokens."""
+    await token.create_index("expires_at", expireAfterSeconds=0)
 
-### 🤖 **Bot Management**
-* **Dynamic Configuration:** Add or remove users/forums directly via Telegram commands—no code edits required.
-* **Owner Security:** Strict `OWNER_ID` and Admin Authorization system (`/auth`) to prevent unauthorized access.
-* **Web Dashboard:** Integrated Flask server with a "Neon" themed health-check page and Keep-Alive support.
+async def generate_random_param(length=8):
+    """Generate a random parameter."""
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
----
+async def get_shortened_url(deep_link):
+    """Shorten the deep link using the external API."""
+    api_url = f"https://{WEBSITE_URL}/api?api={AD_API}&url={deep_link}"
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.get(api_url) as response:
+            if response.status == 200:
+                data = await response.json()   
+                if data.get("status") == "success":
+                    return data.get("shortenedUrl")
+    return None
 
-## 🛠️ Tech Stack
+async def is_user_verified(user_id):
+    """Check if a user has an active session."""
+    session = await token.find_one({"user_id": user_id})
+    return session is not None
 
-* **Python 3.10+**
-* **Pyrogram:** Telegram MTProto API Client.
-* **Motor:** Asynchronous MongoDB driver.
-* **Curl_CFFI:** TLS Fingerprinting for scraping.
-* **Flask:** Web server for deployment health checks.
-* **BeautifulSoup4:** HTML Parsing.
+# --- HANDLERS ---
+@app.on_message(filters.command("start"))
+async def token_handler(client, message):
+    """Handle the /start command."""
+    join = await subscribe(client, message)
+    if join == 1:
+        return
 
----
+    chat_id = "neonfiles"
+    user_id = message.chat.id
+    
+    # Handle basic /start without parameters
+    if len(message.command) <= 1:
+        msg = await app.get_messages(chat_id, 30)
+        image_url = "https://i.postimg.cc/v8q8kGyz/startimg-1.jpg"
+        
+        join_button = InlineKeyboardButton("Join Channel", url="https://t.me/team_spy_pro")
+        premium = InlineKeyboardButton("Get Premium", url="https://t.me/kingofpatal")   
+        
+        keyboard = InlineKeyboardMarkup([
+            [join_button],   
+            [premium]    
+        ])
+        
+        await message.reply_photo(
+            msg.photo.file_id,
+            caption=(
+                "Hi 👋 Welcome, Wanna intro...?\n\n"
+                "✳️ I can save posts from channels or groups where forwarding is off. "
+                "I can download videos/audio from YT, INSTA, ... social platforms\n"
+                "✳️ Simply send the post link of a public channel. "
+                "For private channels, do /login. Send /help to know more."
+            ),
+            reply_markup=keyboard
+        )
+        return  
 
-## 🚀 Installation
+    # Handle /start with parameters (Token Verification)
+    param = message.command[1] if len(message.command) > 1 else None
+    freecheck = await chk_user(message, user_id)
+    
+    if freecheck != 1:
+        await message.reply("You are a premium user no need of token 😉")
+        return
 
-1.  **Clone the Repository**
-    ```bash
-    git clone [https://github.com/MyselfNeon/Website-Monitor.git](https://github.com/MyselfNeon/Website-Monitor.git)
-    cd Website-Monitor
-    ```
+    if param:
+        if user_id in Param and Param[user_id] == param:
+            await token.insert_one({
+                "user_id": user_id,
+                "param": param,
+                "created_at": datetime.utcnow(),
+                "expires_at": datetime.utcnow() + timedelta(hours=3),
+            })
+            del Param[user_id]   
+            await message.reply("✅ You have been verified successfully! Enjoy your session for next 3 hours.")
+            return
+        else:
+            await message.reply("❌ Invalid or expired verification link. Please generate a new token.")
+            return
 
-2.  **Install Dependencies**
-    ```bash
-    pip install -r requirements.txt
-    ```
+@app.on_message(filters.command("token"))
+async def smart_handler(client, message):
+    """Handle the /token command generation."""
+    user_id = message.chat.id
+    
+    freecheck = await chk_user(message, user_id)
+    if freecheck != 1:
+        await message.reply("You are a premium user no need of token 😉")
+        return
 
-3.  **Set Up Environment Variables**
-    Create a `.env` file in the root directory and add the following:
+    if await is_user_verified(user_id):
+        await message.reply("✅ Your free session is already active enjoy!")
+    else:
+        param = await generate_random_param()
+        Param[user_id] = param   
 
-    ```ini
-    # Telegram API (my.telegram.org)
-    API_ID=123456
-    API_HASH=your_api_hash
-    BOT_TOKEN=your_bot_token
+        deep_link = f"https://t.me/{client.me.username}?start={param}"
 
-    # Admin Configuration
-    OWNER_ID=123456789,987654321
+        shortened_url = await get_shortened_url(deep_link)
+        if not shortened_url:
+            await message.reply("❌ Failed to generate the token link. Please try again.")
+            return
 
-    # Database (MongoDB Connection String)
-    DB_URI=mongodb+srv://user:pass@cluster.mongodb.net/?retryWrites=true&w=majority
-    DB_NAME=PMT-Testing
+        button = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Verify the token now...", url=shortened_url)]]
+        )
+        
+        await message.reply(
+            "Click the button below to verify your free access token: \n\n"
+            "> What will you get ? \n"
+            "1. No time bound upto 3 hours \n"
+            "2. Batch command limit will be FreeLimit + 20 \n"
+            "3. All functions unlocked", 
+            reply_markup=button
+        )
 
-    # Application Settings
-    MIN_CHECK_INTERVAL=60
-    MAX_CHECK_INTERVAL=120
-    PORT=8080
-    ```
-
-4.  **Run the Bot**
-    ```bash
-    python main.py
-    ```
-
----
-
-## 🎮 Commands
-
-| Command | Description | Permission |
-| :--- | :--- | :--- |
-| `/start` | Check bot status and get your Chat ID. | Public |
-| `/check` | Force a manual scrape and get a summary report. | Auth/Owner |
-| `/add_user <Name> <URL>` | Add a user profile to the tracking list. | Owner |
-| `/del_user <Name>` | Remove a user from the tracking list. | Owner |
-| `/add_forum <Name> <URL>` | Add a forum section to monitor for new threads. | Owner |
-| `/del_forum <Name>` | Remove a forum from the tracking list. | Owner |
-| `/activity <Name>` | Generate an hourly activity graph for a user. | Owner |
-| `/list` | Show all tracked users, forums, and authorized IDs. | Owner |
-| `/auth <UID>` | Authorize a user to receive alerts and use `/check`. | Owner |
-| `/unauth <UID>` | Revoke authorization from a user. | Owner |
-| `/restart` | Restart the bot process remotely. | Owner |
-
-*Note: Unauthorized users trying to access protected commands will receive an "Access Denied" animation.*
-
----
-
-## 🌐 Deployment (Render/Railway)
-
-This bot is optimized for cloud deployment.
-
-1.  **Flask Keep-Alive:** The bot runs a web server on `0.0.0.0` (Port 8080 by default).
-2.  **Health Check:** Accessing the root URL (`/`) displays a styled Neon HTML page confirming the bot is online.
-3.  **Self-Pinging:** Configure `KEEP_ALIVE_URL` in `main.py` (or via env vars) to ping itself every 5 minutes to prevent sleeping.
-
----
-
-## ⚠️ Disclaimer
-
-This tool is for **educational purposes only**. The scraping mechanism includes delays to be respectful to the target server. The author is not responsible for any misuse or IP bans resulting from the use of this bot.
-
----
-
-## ❤️ Credits
-
-**Developer:** [MyselfNeon](https://t.me/MyselfNeon)  
-**GitHub:** [MyselfNeon](https://github.com/MyselfNeon/)
