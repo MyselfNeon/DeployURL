@@ -61,8 +61,8 @@ async def token_handler(client, message):
         msg = await app.get_messages(chat_id, 30)
         image_url = "https://i.postimg.cc/v8q8kGyz/startimg-1.jpg"
         
-        join_button = InlineKeyboardButton("Join Channel", url="https://t.me/team_spy_pro")
-        premium = InlineKeyboardButton("Get Premium", url="https://t.me/kingofpatal")   
+        join_button = InlineKeyboardButton("Join Channel", url="https://t.me/NeonFiles")
+        premium = InlineKeyboardButton("Get Premium", url="https://t.me/MyselfNeon")   
         
         keyboard = InlineKeyboardMarkup([
             [join_button],   
@@ -73,10 +73,9 @@ async def token_handler(client, message):
             msg.photo.file_id,
             caption=(
                 "Hi 👋 Welcome, Wanna intro...?\n\n"
-                "✳️ I can save posts from channels or groups where forwarding is off. "
-                "I can download videos/audio from YT, INSTA, ... social platforms\n"
-                "✳️ Simply send the post link of a public channel. "
-                "For private channels, do /login. Send /help to know more."
+                "✳️ I can save Posts from Channels or Groups where forwarding is Off. "
+                "✳️ Simply send the Post Link of a Public Channel. "
+                "For Private Channels, do /login. Send /help to know more."
             ),
             reply_markup=keyboard
         )
@@ -87,7 +86,7 @@ async def token_handler(client, message):
     freecheck = await chk_user(message, user_id)
     
     if freecheck != 1:
-        await message.reply("You are a premium user no need of token 😉")
+        await message.reply("You are a Premium user no need of Token 😉")
         return
 
     if param:
@@ -99,10 +98,10 @@ async def token_handler(client, message):
                 "expires_at": datetime.utcnow() + timedelta(hours=3),
             })
             del Param[user_id]   
-            await message.reply("✅ You have been verified successfully! Enjoy your session for next 3 hours.")
+            await message.reply("✅ You have been Verified Successfully! Enjoy your Session for next 3 Hours.")
             return
         else:
-            await message.reply("❌ Invalid or expired verification link. Please generate a new token.")
+            await message.reply("❌ Invalid or Expired Verification Link. Please Generate a new Token.")
             return
 
 @app.on_message(filters.command("token"))
@@ -112,11 +111,11 @@ async def smart_handler(client, message):
     
     freecheck = await chk_user(message, user_id)
     if freecheck != 1:
-        await message.reply("You are a premium user no need of token 😉")
+        await message.reply("You are a Premium User no need of Token 😉")
         return
 
     if await is_user_verified(user_id):
-        await message.reply("✅ Your free session is already active enjoy!")
+        await message.reply("✅ Your free Session is Already active Enjoy!")
     else:
         param = await generate_random_param()
         Param[user_id] = param   
@@ -125,19 +124,19 @@ async def smart_handler(client, message):
 
         shortened_url = await get_shortened_url(deep_link)
         if not shortened_url:
-            await message.reply("❌ Failed to generate the token link. Please try again.")
+            await message.reply("❌ Failed to Generate the Token Link. Please try again.")
             return
 
         button = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("Verify the token now...", url=shortened_url)]]
+            [[InlineKeyboardButton("Verify the Token now...", url=shortened_url)]]
         )
         
         await message.reply(
-            "Click the button below to verify your free access token: \n\n"
+            "Click the Button below to Verify your free Access Token: \n\n"
             "> What will you get ? \n"
-            "1. No time bound upto 3 hours \n"
-            "2. Batch command limit will be FreeLimit + 20 \n"
-            "3. All functions unlocked", 
+            "1. No Time bound upto 3 Hours \n"
+            "2. Batch Command limit will be FreeLimit + 20 \n"
+            "3. All functions Unlocked", 
             reply_markup=button
         )
 
