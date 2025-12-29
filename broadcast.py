@@ -1,196 +1,169 @@
-# ---------------------------------------------------
-# File Name: Broadcast.py
-# Author: MyselfNeon
-# Original Repo: https://github.com/MyselfNeon/SaveRestrictions-Bot
-# GitHub: https://github.com/MyselfNeon/
-# Telegram: https://t.me/MyelfNeon
-# ---------------------------------------------------
-
-from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
-from database.db import db
-from pyrogram import Client, filters
-from config import ADMINS
-import asyncio
-import datetime
-import time
-from pyrogram.types import Message, BotCommand
-import json
 import os
-import sys
-from MyselfNeon.strings import COMMANDS_TEXT
+import re
+import time
+import logging
+import requests
+from telegraph import Telegraph
+from pyrogram import Client, filters
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
-# --- Broadcast Helper Function ---
-async def broadcast_messages(user_id, message):
+# Logger setup
+logger = logging.getLogger(__name__)
+
+# --- Configuration ---
+DOMAIN = "graph.org"
+CATBOX_API_URL = "https://catbox.moe/user/api.php"
+IMGBB_API_URL = "https://api.imgbb.com/1/upload"
+
+# Regex Patterns
+EMOJI_PATTERN = re.compile(r'<emoji id="\d+">')
+TITLE_PATTERN = re.compile(r"title:? (.*)", re.IGNORECASE)
+
+# --- Session Management ---
+user_sessions = set()
+last_update_time = {}
+
+# --- Custom Filter ---
+async def check_session_func(_, __, message):
+    return message.from_user and message.from_user.id in user_sessions
+
+has_active_session = filters.create(check_session_func)
+
+# --- Simple Progress Function ---
+async def simple_progress(current, total, message):
+    percentage = current * 100 / total
+    now = time.time()
+    last_time = last_update_time.get(message.id, 0)
+
+    if now - last_time > 3 or current == total:
+        last_update_time[message.id] = now
+        try:
+            await message.edit(f"**__Downloading ... {int(percentage)}%__**")
+        except Exception:
+            pass
+
+# --- Core Logic: Upload Function ---
+def upload_file(file_path):
+    """
+    Priority: ImgBB (fetched from OS)
+    Fallback: Catbox.moe
+    """
+    # Fetching API Key directly from OS
+    imgbb_key = os.getenv("IMGBB_API_KEY")
+    
+    # 1. Attempt ImgBB
+    if imgbb_key:
+        try:
+            logger.info("Attempting upload to ImgBB...")
+            with open(file_path, "rb") as f:
+                response = requests.post(
+                    IMGBB_API_URL,
+                    params={"key": imgbb_key},
+                    files={"image": f},
+                    timeout=60,
+                )
+            
+            if response.ok:
+                data = response.json()["data"]
+                return {
+                    "provider": "ImgBB",
+                    "url": data["url"],
+                    "delete_url": data.get("delete_url")
+                }
+        except Exception as e:
+            logger.error(f"ImgBB Error: {e}")
+
+    # 2. Fallback to Catbox.moe
     try:
-        await message.copy(chat_id=user_id)
-        return True, "Success"
-    except FloodWait as e:
-        await asyncio.sleep(e.value)
-        return await broadcast_messages(user_id, message)
-    except InputUserDeactivated:
-        await db.delete_user(int(user_id))
-        return False, "Deleted"
-    except UserIsBlocked:
-        await db.delete_user(int(user_id))
-        return False, "Blocked"
-    except PeerIdInvalid:
-        await db.delete_user(int(user_id))
-        return False, "Error"
+        logger.info("Falling back to Catbox.moe...")
+        with open(file_path, "rb") as f:
+            response = requests.post(
+                CATBOX_API_URL,
+                data={"reqtype": "fileupload", "userhash": ""},
+                files={"fileToUpload": f},
+                timeout=60
+            )
+            
+        if response.ok:
+            return {
+                "provider": "Catbox",
+                "url": response.text.strip(),
+                "delete_url": None
+            }
     except Exception as e:
-        print(f"[!] Broadcast error for {user_id}: {e}")
-        return False, "Error"
+        logger.error(f"Catbox Error: {e}")
+        
+    return None
 
-# --- /broadcast command ---
-@Client.on_message(filters.command("broadcast") & filters.user(ADMINS))
-async def broadcast_command(bot: Client, message: Message):
-    b_msg = message.reply_to_message
-    if not b_msg:
-        return await message.reply_text(
-            "**__Reply to this command with the message you want to broadcast.__**",
-            quote=True
-        )
-
-    users = await db.get_all_users()
-    sts = await message.reply_text(
-        text='**__Broadcasting your message...__**',
+# --- Handlers ---
+@Client.on_message(filters.command("tel") & filters.private)
+async def ask_content_handler(client: Client, message: Message):
+    user_sessions.add(message.from_user.id)
+    await message.reply_text(
+        "**__✅ Mode Initiated !__**\n\n"
+        "**__Please Send the Photo or Text now.__**\n"
+        "**__I will Process the Very Next Message you Send.__**",
         quote=True
     )
 
-    start_time = time.time()
-    total_users = await db.total_users_count()
-    done = 0
-    blocked = 0
-    deleted = 0
-    failed = 0
-    success = 0
+@Client.on_message(filters.photo & filters.private & has_active_session)
+async def photo_handler(client: Client, message: Message):
+    user_sessions.discard(message.from_user.id)
+    msg = await message.reply_text("**__Processing Photo ... 0%__**", quote=True)
+    
+    file = None
+    location = f"./downloads/{message.from_user.id}_{int(time.time())}/"
 
-    async for user in users:
-        user_id = user.get('id')
-        if user_id:
-            pti, sh = await broadcast_messages(int(user_id), b_msg)
-            if pti:
-                success += 1
-            else:
-                if sh == "Blocked":
-                    blocked += 1
-                elif sh == "Deleted":
-                    deleted += 1
-                elif sh == "Error":
-                    failed += 1
-            done += 1
+    try:
+        file = await message.download(location, progress=simple_progress, progress_args=(msg,))
+        await msg.edit("**__☁️ Uploading...__**")
+        
+        media_data = upload_file(file)
+        if not media_data:
+            await msg.edit("**__❌ Upload Failed.__**")
+            return
 
-            if done % 20 == 0:
-                await sts.edit(
-                    f"**__Broadcast In Progress:__**\n\n"
-                    f"**👥 Total Users:** {total_users}\n"
-                    f"**💫 Completed:** {done} / {total_users}\n"
-                    f"**✅ Success:** {success}\n"
-                    f"**🚫 Blocked:** {blocked}\n"
-                    f"**🚮 Deleted:** {deleted}"
-                )
+        buttons = [[InlineKeyboardButton("🌐 Vɪᴇᴡ Iᴍᴀɢᴇ", url=media_data["url"])]]
+        if media_data.get("delete_url"):
+            buttons.append([InlineKeyboardButton("🗑️ Dᴇʟᴇᴛᴇ", url=media_data["delete_url"])])
+
+        await msg.edit(
+            f"✅ **__Upload Successful !__**\n🖇️ `{media_data['url']}`\n📡 **__Provider: {media_data['provider']}__**",
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    except Exception as e:
+        await msg.edit(f"**__Error:** {e}__")
+    finally:
+        last_update_time.pop(msg.id, None)
+        if file and os.path.exists(file): os.remove(file)
+        if os.path.exists(location): os.rmdir(location)
+
+@Client.on_message(filters.text & filters.private & has_active_session)
+async def text_handler(client: Client, message: Message):
+    user_sessions.discard(message.from_user.id)
+    msg = await message.reply_text("**__Processing Text...⏳__**", quote=True)
+
+    try:
+        user = Telegraph(domain=DOMAIN).create_account(short_name="@NeonFiles")
+        content = message.text.html
+        content = re.sub(EMOJI_PATTERN, "", content).replace("</emoji>", "")
+
+        title_match = re.findall(TITLE_PATTERN, content)
+        if title_match:
+            title = title_match[0]
+            content = "\n".join(content.splitlines()[1:])
         else:
-            done += 1
-            failed += 1
-            if done % 20 == 0:
-                await sts.edit(
-                    f"**__Broadcast In Progress:__**\n\n"
-                    f"**👥 Total Users:** {total_users}\n"
-                    f"**💫 Completed:** {done} / {total_users}\n"
-                    f"**✅ Success:** {success}\n"
-                    f"**🚫 Blocked:** {blocked}\n"
-                    f"**🚮 Deleted:** {deleted}"
-                )
+            title = message.from_user.first_name
 
-    time_taken = datetime.timedelta(seconds=int(time.time() - start_time))
-    await sts.edit(
-        f"**__Broadcast Completed:__**\n"
-        f"**⏰ Completed in:** {time_taken}\n\n"
-        f"**👥 Total Users:** {total_users}\n"
-        f"**💫 Completed:** {done} / {total_users}\n"
-        f"**✅ Success:** {success}\n"
-        f"**🚫 Blocked:** {blocked}\n"
-        f"**🚮 Deleted:** {deleted}"
-    )
-
-# --- /users Command (Standalone + JSON export) ---
-@Client.on_message(filters.command("users") & filters.user(ADMINS))
-async def users_count(bot: Client, message: Message):
-    msg = await message.reply_text("⏳ <b>__Gathering User Data...__</b>", quote=True)
-    try:
-        total = await db.total_users_count()
-        await msg.edit_text(
-            f"""
-🌀 <b><i>User Analytics Update</i></b> 🌀
-
-👥 <b>Total Registered Users:</b> {total}
-🛰 <b>System Status:</b> Active ✅
-🧠 <b>Data Source:</b> MongoDB (async)
-"""
+        content = content.replace("\n", "<br>")
+        
+        response = Telegraph(domain=DOMAIN, access_token=user.get("access_token")).create_page(
+            title=title,
+            html_content=content,
+            author_name=str(message.from_user.first_name),
+            author_url=f"https://t.me/{message.from_user.username}" if message.from_user.username else None
         )
-
-        users_cursor = await db.get_all_users()
-        users_list = []
-        async for user in users_cursor:
-            users_list.append({
-                "name": user.get("name", "None"),
-                "username": user.get("username", "None"),
-                "id": user.get("id")
-            })
-
-        tmp_path = "SaveRestricted.json"
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(users_list, f, indent=2, ensure_ascii=False)
-
-        caption = f"📄 **Recorded {len(users_list)} Users**"
-        await message.reply_document(
-            document=tmp_path,
-            caption=caption
-        )
-
-        try:
-            os.remove(tmp_path)
-        except Exception as e:
-            print(f"[!] Failed to Delete File {tmp_path}: {e}")
-
+        
+        await msg.edit(f"**__https://{DOMAIN}/{response['path']}__**")
     except Exception as e:
-        await msg.edit_text(f"**__⚠️ Error Fetching User Data:__**\n<code>{e}</code>")
-        print(f"[!] /users error: {e}")
-
-# --- 1. RESTART COMMAND (Clean & Self-Contained) ---
-@Client.on_message(filters.command("restart") & filters.user(ADMINS))
-async def restart_cmd(client: Client, message: Message):
-    # 1. Send the confirmation message
-    msg = await message.reply_text(
-        "🔄 **__Restarting Bot...__**\n\n__Please wait while I reload...__"
-    )
-    
-    await asyncio.sleep(100)
-    
-    await msg.delete()
-    
-    # 4. Restart the bot process
-    os.execl(sys.executable, sys.executable, *sys.argv)
-
-# --- 2. SET COMMANDS ---
-@Client.on_message(filters.command("setcmd") & filters.user(ADMINS))
-async def set_commands(client: Client, message: Message):
-    commands = []
-    
-    # Using COMMANDS_TEXT imported from strings.py
-    for line in COMMANDS_TEXT.strip().split("\n"):
-        if "-" in line:
-            cmd, desc = line.split("-", 1)
-            commands.append(BotCommand(cmd.strip(), desc.strip()))
-
-    if not commands:
-        return await message.reply_text("❌ No commands found.")
-
-    try:
-        await client.set_bot_commands(commands)
-        await message.reply_text(f"✅ **__Success 🎉 \nUpdated {len(commands)} Commands.__**")
-    except Exception as e:
-        await message.reply_text(f"❌ **Error:** `{e}`")
-
-# Credits
-# Developer Telegram: @MyselfNeon
-# Update channel: @NeonFiles
+        await msg.edit(f"**__Error:** {e}__")
