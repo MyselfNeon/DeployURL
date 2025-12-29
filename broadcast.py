@@ -1,7 +1,7 @@
 # ---------------------------------------------------
 # File Name: Telegraph.py
 # Author: MyselfNeon
-# Original Repo: https://github.com/MyselfNeon/SaveRestrictions-V2Bot
+# Original Repo: https://github.com/MyselfNeon/SaveRestrictions-V2
 # GitHub: https://github.com/MyselfNeon/
 # Telegram: https://t.me/MyelfNeon
 # ---------------------------------------------------
