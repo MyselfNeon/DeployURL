@@ -15,7 +15,6 @@ from telegraph import Telegraph
 from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
-# --- Import 'app' from your package ---
 from MyselfNeon import app 
 
 # Logger setup
@@ -52,7 +51,7 @@ async def simple_progress(current, total, message):
     if now - last_time > 3 or current == total:
         last_update_time[message.id] = now
         try:
-            await message.edit(f"**__Downloading ... {int(percentage)}%__**")
+            await message.edit(f"⏳ **__Downloading ... {int(percentage)}%__**")
         except Exception:
             pass
 
@@ -104,16 +103,16 @@ async def graph_command_handler(client, message: Message):
         # EDIT MODE CHECK
         if "graph.org" in arg or "telegra.ph" in arg:
             if not os.getenv("TELEGRAPH_TOKEN"):
-                await message.reply_text("**⚠️ Error:** `TELEGRAPH_TOKEN` missing.")
+                await message.reply_text("**__⚠️ Error:** `TELEGRAPH_TOKEN` missing.__")
                 return
 
             path = arg.split("/")[-1]
             edit_sessions[user_id] = path
             
             await message.reply_text(
-                f"**__✍️ Edit Mode Activated__**\n\n"
-                f"__Editing Post:__ `{path}`\n"
-                "**__Send new text to update.__**",
+                f"**__📝 Edit Mode Activated__**\n\n"
+                f"**__Editing Post:** {path}__\n"
+                "**__Send New Text to Update.__**",
                 quote=True
             )
             return
