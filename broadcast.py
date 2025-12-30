@@ -111,7 +111,7 @@ async def graph_command_handler(client, message: Message):
             
             await message.reply_text(
                 f"**__📝 Edit Mode Activated__**\n\n"
-                fn ✏️ **__Editing Post:** {path}__\n"
+                f"✏️ **__Editing Post:** {path}__\n"
                 "🆕 **__Send New Text to Update.__**",
                 quote=True
             )
@@ -127,7 +127,7 @@ async def graph_command_handler(client, message: Message):
 
     user_sessions[user_id] = expiration
     await message.reply_text(
-        f"**__✅ Mode Initiated !__**\n**__Mode: {mode_text}__**\n\n"
+        f"**__✅ Mode Initiated !__**\n\n🎛️**__Mode: {mode_text}__**\n\n"
         "**__Please Send the Photo or Text__**",
         quote=True
     )
@@ -288,7 +288,7 @@ async def process_edit_handler(client, message: Message):
             ]
         ]
         
-        await msg.edit(f"**__✅ Post Updated!__**\n**__https://{DOMAIN}/{path}__**", reply_markup=InlineKeyboardMarkup(buttons))
+        await msg.edit(f"**__✅ Post Updated!__**\n🔗 **__https://{DOMAIN}/{path}__**", reply_markup=InlineKeyboardMarkup(buttons))
 
     except Exception as e:
-        await msg.edit(f"**__Update Failed.__**\n**__Error:** {e}__")
+        await msg.edit(f"🆘 **__Update Failed.__**\n❌ **__Error:** {e}__")
