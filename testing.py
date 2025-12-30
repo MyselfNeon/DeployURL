@@ -154,10 +154,10 @@ async def token_handler(client, message):
                 "expires_at": datetime.utcnow() + timedelta(hours=3),
             })
             del Param[user_id]   
-            await message.reply("✅ You have been Verified Successfully! Enjoy your Session for next 3 Hours.")
+            await message.reply("**__✅ You have been Verified Successfully! Enjoy your Session for next 3 Hours.__**")
             return
         else:
-            await message.reply("❌ Invalid or Expired Verification Link. Please Generate a new Token.")
+            await message.reply("**__❌ Invalid or Expired Verification Link. Please Generate a new Token.__**")
             return
 
 @app.on_message(filters.command("token"))
@@ -171,7 +171,7 @@ async def smart_handler(client, message):
         return
 
     if await is_user_verified(user_id):
-        await message.reply("✅ Your free Session is Already active Enjoy!")
+        await message.reply("**__✅ Your Free Session is Already Active Enjoy!__**")
     else:
         param = await generate_random_param()
         Param[user_id] = param   
@@ -180,11 +180,11 @@ async def smart_handler(client, message):
 
         shortened_url = await get_shortened_url(deep_link)
         if not shortened_url:
-            await message.reply("❌ Failed to Generate the Token Link. Please try again.")
+            await message.reply("**__❌ Failed to Generate the Token Link. Please try again.__**")
             return
 
         button = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("Verify the Token now...", url=shortened_url)]]
+            [[InlineKeyboardButton("🎲 Vᴇʀɪғʏ Tʜᴇ Tᴏᴋᴇɴ Nᴏᴡ ...", url=shortened_url)]]
         )
         
         await message.reply(
@@ -246,15 +246,15 @@ async def more_bots_page(client, cb: CallbackQuery):
     
     text = (
         "<blockquote><b><i>🤖 My Other Bots:</i></b></blockquote>\n\n"
-        "<b>• @ZeroFilterBot\n"
-        "<b>• @Uptime_oBot\n"
-        "<b>• @NeonFilesBot\n"
-        "<b>• @Rename2GBbot\n"
-        "<b>• @nWebAlertsBot\n"
-        "<b>• @NeonSessionBot\n"
-        "<b>• @nTelegraph_Bot\n"
-        "<b>• @FileStream_oBot\n"
-        "<b>• @SaveRestriction_oBot"
+        "<b>01. @ZeroFilterBot</b>\n"
+        "<b>02. @Uptime_oBot</b>\n"
+        "<b>03. @NeonFilesBot</b>\n"
+        "<b>04. @Rename2GBbot</b>\n"
+        "<b>05. @nWebAlertsBot</b>\n"
+        "<b>06. @NeonSessionBot</b>\n"
+        "<b>07. @nTelegraph_Bot</b>\n"
+        "<b>08. @FileStream_oBot</b>\n"
+        "<b>09. @SaveRestriction_oBot</b>"
     )
     
     buttons = InlineKeyboardMarkup([
