@@ -245,9 +245,16 @@ async def more_bots_page(client, cb: CallbackQuery):
     await cb.answer()
     
     text = (
-        "<b>🤖 My Other Bots:</b>\n\n"
-        "• @Bot1\n"
-        "• @bot2"
+        "<blockquote><b><i>🤖 My Other Bots:</i></b></blockquote>\n\n"
+        "<b>• @ZeroFilterBot\n"
+        "<b>• @Uptime_oBot\n"
+        "<b>• @NeonFilesBot\n"
+        "<b>• @Rename2GBbot\n"
+        "<b>• @nWebAlertsBot\n"
+        "<b>• @NeonSessionBot\n"
+        "<b>• @nTelegraph_Bot\n"
+        "<b>• @FileStream_oBot\n"
+        "<b>• @SaveRestriction_oBot"
     )
     
     buttons = InlineKeyboardMarkup([
@@ -257,7 +264,7 @@ async def more_bots_page(client, cb: CallbackQuery):
         ]
     ])
     
-    # Image URL for More Bots
+    # --- Image URL for More Bots ---
     IMAGE_URL = "https://files.catbox.moe/7c5u70.jpg"
 
     await cb.message.edit_media(
@@ -279,7 +286,6 @@ async def back_to_start(client, cb: CallbackQuery):
     
     chat_id = -1002158258466
     
-    # Fetch Start Image (ID 200) from Cache
     file_id = await get_cached_file_id(client, chat_id, 200)
     
     mention = f"<a href='tg://user?id={cb.from_user.id}'>{cb.from_user.first_name}</a>"
