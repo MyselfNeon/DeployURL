@@ -123,12 +123,12 @@ async def graph_command_handler(client, message: Message):
         elif arg.isdigit(): expiration = int(arg)
         
         if expiration > 0:
-            mode_text = f"**__Auto-Delete Mode__** ⏳ ({int(expiration/60)} mins)"
+            mode_text = f"🚮 Auto-Delete Mode \n⏰ ({int(expiration/60)} mins)"
 
     user_sessions[user_id] = expiration
     await message.reply_text(
-        f"**__✅ Mode Initiated !__**\n__Mode: {mode_text}__\n\n"
-        "**__Please Send the Photo or Text now.__**",
+        f"**__✅ Mode Initiated !__**\n**__Mode: {mode_text}__**\n\n"
+        "**__Please Send the Photo or Text__**",
         quote=True
     )
 
@@ -136,14 +136,14 @@ async def graph_command_handler(client, message: Message):
 @app.on_message(filters.photo & filters.private & has_active_session)
 async def photo_handler(client, message: Message):
     expiration = user_sessions.pop(message.from_user.id, 0)
-    msg = await message.reply_text("**__Processing Photo... 0%__**", quote=True)
+    msg = await message.reply_text("🚨 **__Processing Photo ... 0%__**", quote=True)
     
     file = None
     location = f"./downloads/{message.from_user.id}_{int(time.time())}/"
 
     try:
         file = await message.download(location, progress=simple_progress, progress_args=(msg,))
-        await msg.edit("**__☁️ Uploading...__**")
+        await msg.edit("**__☁️ Uploading Now ...__**")
         
         media_data = upload_file(file, expiration=expiration)
         if not media_data:
