@@ -111,8 +111,8 @@ async def graph_command_handler(client, message: Message):
             
             await message.reply_text(
                 f"**__📝 Edit Mode Activated__**\n\n"
-                f"**__Editing Post:** {path}__\n"
-                "**__Send New Text to Update.__**",
+                fn ✏️ **__Editing Post:** {path}__\n"
+                "🆕 **__Send New Text to Update.__**",
                 quote=True
             )
             return
@@ -123,7 +123,7 @@ async def graph_command_handler(client, message: Message):
         elif arg.isdigit(): expiration = int(arg)
         
         if expiration > 0:
-            mode_text = f"🚮 Auto-Delete Mode \n⏰ ({int(expiration/60)} mins)"
+            mode_text = f"🛃 Auto-Delete Mode \n⏰ ({int(expiration/60)} mins)"
 
     user_sessions[user_id] = expiration
     await message.reply_text(
@@ -152,7 +152,7 @@ async def photo_handler(client, message: Message):
 
         buttons = [[InlineKeyboardButton("🌐 Vɪᴇᴡ Iᴍᴀɢᴇ", url=media_data["url"])]]
         if media_data.get("delete_url") and expiration == 0:
-            buttons.append([InlineKeyboardButton("🗑️ Dᴇʟᴇᴛᴇ (Wᴇʙ)", url=media_data["delete_url"])])
+            buttons.append([InlineKeyboardButton("🛃 Dᴇʟᴇᴛᴇ (Wᴇʙ)", url=media_data["delete_url"])])
 
         info_text = f"✅ **__Upload Successful !__**\n🔗 **__[Click Here to View]({media_data['url']})__**\n📡 **__Provider: {media_data['provider']}__**"
         if expiration > 0: info_text += f"\n🕓 **__Auto-Deletes in: {int(expiration/60)} mins__**"
@@ -200,12 +200,12 @@ async def text_handler(client, message: Message):
         if is_auth:
             buttons = [
                 [
-                    InlineKeyboardButton("📝 Edit Post", callback_data=f"edit_start_{page_path}"),
-                    InlineKeyboardButton("🗑️ Delete Post", callback_data=f"delete_post_{page_path}")
+                    InlineKeyboardButton("📝 Eᴅɪᴛ Pᴏsᴛ", callback_data=f"edit_start_{page_path}"),
+                    InlineKeyboardButton("🛃 Dᴇʟᴇᴛᴇ Pᴏsᴛ", callback_data=f"delete_post_{page_path}")
                 ]
             ]
         
-        await msg.edit(f"**__✅ Generated Post Link:__**\n**__{page_url}__**", reply_markup=InlineKeyboardMarkup(buttons) if buttons else None)
+        await msg.edit(f"**__✅ Generated Post Link:__**\n🔗 **__{page_url}__**", reply_markup=InlineKeyboardMarkup(buttons) if buttons else None)
 
     except Exception as e:
         await msg.edit(f"**__Error:** {e}__")
@@ -218,7 +218,7 @@ async def edit_callback_handler(client, query: CallbackQuery):
     
     await query.message.reply_text(
         f"**__📝 Edit Mode Activated__**\n\n"
-        f"**__Editing Post:** {path}__\n"
+        f"✏️ **__Editing Post:** {path}__\n"
         "🆕 **__Send new Text to Update.__**"
     )
     await query.answer("Edit Mode Started")
@@ -283,8 +283,8 @@ async def process_edit_handler(client, message: Message):
         # Same Format As Generation
         buttons = [
             [
-                InlineKeyboardButton("📝 Edit Post", callback_data=f"edit_start_{path}"),
-                InlineKeyboardButton("🛃 Delete Post", callback_data=f"delete_post_{path}")
+                InlineKeyboardButton("📝 Eᴅɪᴛ Pᴏsᴛ", callback_data=f"edit_start_{path}"),
+                InlineKeyboardButton("🛃 Dᴇʟᴇᴛᴇ Pᴏsᴛ", callback_data=f"delete_post_{path}")
             ]
         ]
         
