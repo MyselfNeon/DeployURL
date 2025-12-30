@@ -10,7 +10,7 @@ import random
 import string
 import requests
 import aiohttp
-import asyncio  # <--- Added for sleep
+import asyncio
 from pyrogram import enums
 from datetime import datetime, timedelta
 
@@ -28,7 +28,7 @@ tdb = tclient["telegram_bot"]
 token = tdb["tokens"]
 
 Param = {}
-MEDIA_CACHE = {} # Caching for smoothness
+MEDIA_CACHE = {}
 
 # --- REACTIONS LIST ---
 REACTIONS = [
@@ -83,7 +83,7 @@ async def get_cached_file_id(client, chat_id, msg_id):
 async def token_handler(client, message):
     """Handle the /start command."""
     
-    # 1. Random Reaction Logic
+    # --- 1. Random Reaction Logic ---
     try:
         await message.react(emoji=random.choice(REACTIONS), big=True)
     except Exception:
@@ -96,7 +96,6 @@ async def token_handler(client, message):
     chat_id = -1002158258466
     user_id = message.chat.id
     
-    # Handle basic /start without parameters
     if len(message.command) <= 1:
         
         # --- NEW STICKER ANIMATION ---
@@ -107,10 +106,9 @@ async def token_handler(client, message):
         except Exception:
             pass
             
-        # Fetch Image 200 for the Start Message
         file_id = await get_cached_file_id(client, chat_id, 200)
         
-        # Mention Automatically
+        # --- Mention Automatically ---
         mention = f"<a href='tg://user?id={message.from_user.id}'>{message.from_user.first_name}</a>"
         
         keyboard = InlineKeyboardMarkup([
@@ -139,7 +137,7 @@ async def token_handler(client, message):
             await message.reply("Error: Start image (ID 200) not found in channel.")
         return  
 
-    # Handle /start with parameters (Token Verification)
+    # --- Handle /start with parameters (Token Verification) ---
     param = message.command[1] if len(message.command) > 1 else None
     freecheck = await chk_user(message, user_id)
     
@@ -190,16 +188,16 @@ async def smart_handler(client, message):
         )
         
         await message.reply(
-            "Click the Button below to Verify your free Access Token: \n\n"
-            "> What will you get ? \n"
-            "1. No Time bound upto 3 Hours \n"
-            "2. Batch Command limit will be FreeLimit + 20 \n"
-            "3. All functions Unlocked", 
+            "🚨 **__Click the Button Below to Verify your Free Access Token:__** \n\n"
+            "> **What will you get ?** \n"
+            "**__1. No Time Bound upto 3 Hours__** \n"
+            "**__2. Removed Batch Command Limit \n"
+            "**__3. FreeLimit + 20 \n"
+            "**__4. More Functions Unlocked__**", 
             reply_markup=button
     )
 
 # --- CALLBACK HANDLERS ---
-
 @app.on_callback_query(filters.regex("about_btn"))
 async def about_page(client, cb: CallbackQuery):
     await cb.answer()
@@ -207,7 +205,7 @@ async def about_page(client, cb: CallbackQuery):
     bot = await client.get_me()
     me = f"<a href='tg://user?id={bot.id}'>{bot.first_name}</a>"
 
-    about_text = f"""<b><blockquote>‣ 📝 𝐌𝐘 𝐃𝐄𝐓𝐀𝐈𝐋𝐒</blockquote>
+    about_text = f"""<b><blockquote>‣ ⁉️ 𝐌𝐘 𝐃𝐄𝐓𝐀𝐈𝐋𝐒</blockquote>
 <blockquote><i>• Mʏ Nᴀᴍᴇ : {me}
 • Mʏ Bᴇsᴛ Fʀɪᴇɴᴅ : <a href='tg://settings'>Tʜɪs Sᴡᴇᴇᴛɪᴇ ❤️</a> 
 • Dᴇᴠᴇʟᴏᴘᴇʀ : <a href='https://t.me/MyselfNeon'>@MʏsᴇʟғNᴇᴏɴ</a> 
@@ -221,7 +219,7 @@ async def about_page(client, cb: CallbackQuery):
         [
             [
                 InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ 🔊", url="https://t.me/+o1s-8MppL2syYTI9"),
-                InlineKeyboardButton("Sᴏᴜʀᴄᴇ Cᴏᴅᴇ 🆘", url="https://t.me/NeonSessionBot?start=Neon")
+                InlineKeyboardButton("Sᴏᴜʀᴄᴇ Cᴏᴅᴇ 🆘", url="https://myselfneon.github.io/neon/")
             ],
             [
                 InlineKeyboardButton("Cʟᴏsᴇ ❌", callback_data="close"),
@@ -315,4 +313,5 @@ async def back_to_start(client, cb: CallbackQuery):
     else:
         await cb.answer("Error: Start image (ID 200) not found!", show_alert=True)
       
-# MyselfNeon #
+# --- MyselfNeon 🎉 ---
+# --- Telegram/Github = @MyselfNeon ---
