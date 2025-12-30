@@ -252,11 +252,11 @@ async def process_edit_handler(client, message: Message):
     # Retrieve & Remove Session (One-time action)
     path = edit_sessions.pop(message.from_user.id) 
     
-    msg = await message.reply_text("**__Updating Post...⏳__**", quote=True)
+    msg = await message.reply_text("🆘 **__Updating Post ...__**", quote=True)
 
     telegraph, is_auth = get_telegraph_client()
     if not is_auth:
-        await msg.edit("**❌ Error:** Token missing.")
+        await msg.edit("**__❌ Error:** Token missing__.")
         return
 
     try:
@@ -284,11 +284,11 @@ async def process_edit_handler(client, message: Message):
         buttons = [
             [
                 InlineKeyboardButton("📝 Edit Post", callback_data=f"edit_start_{path}"),
-                InlineKeyboardButton("🗑️ Delete Post", callback_data=f"delete_post_{path}")
+                InlineKeyboardButton("🛃 Delete Post", callback_data=f"delete_post_{path}")
             ]
         ]
         
-        await msg.edit(f"**__✅ Post Updated!__**\nhttps://{DOMAIN}/{path}", reply_markup=InlineKeyboardMarkup(buttons))
+        await msg.edit(f"**__✅ Post Updated!__**\n**__https://{DOMAIN}/{path}__**", reply_markup=InlineKeyboardMarkup(buttons))
 
     except Exception as e:
-        await msg.edit(f"**__Update Failed.__**\nError: {e}")
+        await msg.edit(f"**__Update Failed.__**\n**__Error:** {e}__")
