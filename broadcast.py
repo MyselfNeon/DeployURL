@@ -154,8 +154,8 @@ async def photo_handler(client, message: Message):
         if media_data.get("delete_url") and expiration == 0:
             buttons.append([InlineKeyboardButton("🗑️ Dᴇʟᴇᴛᴇ (Wᴇʙ)", url=media_data["delete_url"])])
 
-        info_text = f"✅ **__Upload Successful !__**\n🖇️ `{media_data['url']}`\n📡 **__Provider: {media_data['provider']}__**"
-        if expiration > 0: info_text += f"\n⏳ **__Auto-Deletes in: {int(expiration/60)} mins__**"
+        info_text = f"✅ **__Upload Successful !__**\n🔗 **__[Click Here to View]({media_data['url']})__**\n📡 **__Provider: {media_data['provider']}__**"
+        if expiration > 0: info_text += f"\n🕓 **__Auto-Deletes in: {int(expiration/60)} mins__**"
 
         await msg.edit(info_text, reply_markup=InlineKeyboardMarkup(buttons))
     except Exception as e:
@@ -169,7 +169,7 @@ async def photo_handler(client, message: Message):
 @app.on_message(filters.text & filters.private & has_active_session)
 async def text_handler(client, message: Message):
     user_sessions.pop(message.from_user.id, None)
-    msg = await message.reply_text("**__Processing Text...⏳__**", quote=True)
+    msg = await message.reply_text("**__Processing Text ...😇__**", quote=True)
 
     telegraph, is_auth = get_telegraph_client()
 
@@ -205,7 +205,7 @@ async def text_handler(client, message: Message):
                 ]
             ]
         
-        await msg.edit(f"**__✅ Generated:__**\n{page_url}", reply_markup=InlineKeyboardMarkup(buttons) if buttons else None)
+        await msg.edit(f"**__✅ Generated Post Link:__**\n**__{page_url}__**", reply_markup=InlineKeyboardMarkup(buttons) if buttons else None)
 
     except Exception as e:
         await msg.edit(f"**__Error:** {e}__")
@@ -217,9 +217,9 @@ async def edit_callback_handler(client, query: CallbackQuery):
     edit_sessions[query.from_user.id] = path
     
     await query.message.reply_text(
-        f"**__✍️ Edit Mode Activated__**\n\n"
-        f"__Editing Post:__ `{path}`\n"
-        "**__Send new text to update.__**"
+        f"**__📝 Edit Mode Activated__**\n\n"
+        f"**__Editing Post:** {path}__\n"
+        "🆕 **__Send new Text to Update.__**"
     )
     await query.answer("Edit Mode Started")
 
@@ -241,10 +241,10 @@ async def delete_post_callback(client, query: CallbackQuery):
             author_name="Ghost", 
             return_content=False
         )
-        await query.message.edit_text(f"**🗑️ Post Deleted.**\nhttps://{DOMAIN}/{path}")
-        await query.answer("Post wiped successfully.")
+        await query.message.edit_text(f"**__🛃 Post Deleted.**\n**__https://{DOMAIN}/{path}"__**)
+        await query.answer("Post Wiped Successfully.")
     except Exception as e:
-        await query.answer(f"Failed to delete: {e}", show_alert=True)
+        await query.answer(f"Failed to Delete: {e}", show_alert=True)
 
 # --- Handler 6: Process Edit Text ---
 @app.on_message(filters.text & filters.private & has_edit_session)
