@@ -69,7 +69,7 @@ async def remove_premium(client, message):
             )
         )
     else:
-        await message.reply_text("🚫 __Unable to remove user__\nᴀʀᴇ ʏᴏᴜ ꜱᴜʀᴇ, ɪᴛ ᴡᴀꜱ ᴀ ᴘʀᴇᴍɪᴜᴍ ᴜꜱᴇʀ ɪᴅ ?")
+        await message.reply_text("🚫 __Unable to remove user !__\n__Are you sure it was a premium user ID ?__")
 
 @app.on_message(filters.command("myplan"))
 async def myplan(client, message):
@@ -83,19 +83,19 @@ async def myplan(client, message):
         time_left_str = calculate_time_left(expiry)
 
         await message.reply_text(
-            f"⚜️ ᴘʀᴇᴍɪᴜᴍ ᴜꜱᴇʀ ᴅᴀᴛᴀ :\n\n"
-            f"👤 ᴜꜱᴇʀ : {user_mention}\n"
-            f"⚡ ᴜꜱᴇʀ ɪᴅ : <code>{user_id}</code>\n"
-            f"⏰ ᴛɪᴍᴇ ʟᴇꜰᴛ : {time_left_str}\n"
-            f"⌛️ ᴇxᴘɪʀʏ ᴅᴀᴛᴇ : {expiry_str}"
+            f"⚜️ **__Premium User Data :__**\n\n"
+            f"👤 **__User :** {user_mention}__\n"
+            f"⚡ **__User ID :** `{user_id}`__\n"
+            f"⏰ **__Time Left :** {time_left_str}__\n"
+            f"⌛️ **__Expiry Date :** {expiry_str}__"
         )
     else:
-        await message.reply_text(f"ʜᴇʏ {user_mention},\n\nʏᴏᴜ ᴅᴏ ɴᴏᴛ ʜᴀᴠᴇ ᴀɴʏ ᴀᴄᴛɪᴠᴇ ᴘʀᴇᴍɪᴜᴍ ᴘʟᴀɴs")
+        await message.reply_text(f"__Hey {user_mention}__,\n\n__You do not have any active Premium plans__")
 
 @app.on_message(filters.command("check") & filters.user(OWNER_ID))
 async def get_premium(client, message):
     if len(message.command) != 2:
-        await message.reply_text("ᴜꜱᴀɢᴇ : /check user_id")
+        await message.reply_text("**__Usage :** /check user_id __")
         return
 
     user_id = int(message.command[1])
