@@ -1,25 +1,8 @@
-await app.set_bot_commands([
-        BotCommand("start", "🚀 Start the Bot"),
-        BotCommand("batch", "🫠 Extract in Bulk"),
-        BotCommand("login", "🔑 Get Into the Bot"),
-        BotCommand("logout", "🚪 Get Out of the Bot"),
-        BotCommand("token", "🎲 Get 3 Hours Free Access"),
-        BotCommand("adl", "🎙️ Download Audio from 30+ Sites"),
-        BotCommand("dl", "🎞️ Download Videos from 30+ Sites"),
-        BotCommand("graph", "📇 Create Telegraph Posts"),
-        BotCommand("freez", "🧊 Remove all Expired User"),
-        BotCommand("pay", "💸 Pay now to get Subscription"),
-        BotCommand("transfer", "💘 Gift Premium to Others"),
-        BotCommand("myplan", "⌛ Get your Plan Details"),
-        BotCommand("add", "➕ Add User to Premium"),
-        BotCommand("rem", "➖ Remove from Premium"),
-        BotCommand("settings", "⚙️ Personalize Settings"),
-        BotCommand("stats", "📊 Get Stats of the Bot"),
-        BotCommand("plan", "🗓️ Check Our Premium Plans"),
-        BotCommand("terms", "🥺 Terms & Conditions"),
-        BotCommand("speedtest", "🚅 Speed of Server"),
-        BotCommand("lock", "🔒 Protect Channel from Extraction"),
-        BotCommand("gcast", "⚡ Broadcast Message to Bot Users"),
-        BotCommand("help", "❓ If you're a Noob, Still!"),
-        BotCommand("cancel", "🚫 Cancel Batch Process")
-    ])
+terms_text = (
+        "> 📜 **Terms & Conditions**\n\n"
+        "• __Users are solely responsible for their actions and content. The service does not promote or support copyrighted or illegal activity.__\n"
+        "• __Purchase of any plan does not guarantee service availability, uptime, or continuity. The service may be modified or discontinued at any time without notice.__\n"
+        "• __User access, authorization, or banning is entirely at the service provider’s discretion.__\n"
+        "• __Payment does not guarantee access to any feature, including the /batch command.__\n"
+        "• __No refunds, compensation, or claims may be made for denied access, service interruptions, or account restrictions.__\n"
+    )
