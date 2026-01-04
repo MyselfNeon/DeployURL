@@ -170,7 +170,8 @@ async def give_premium_cmd_handler(client, message):
                 f"⌛️ **__Expiry Date:** {expiry_str}__"
             ),
             disable_web_page_preview=True
-        You   else:
+        )
+    else:
         await message.reply_text("__Invalid time format. Please use '1 day for days', '1 hour for hours', or '1 min for minutes', or '1 month for months' or '1 year for year'__")
 
 @app.on_message(filters.command("transfer"))
