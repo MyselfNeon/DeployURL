@@ -1,7 +1,11 @@
 plan_text = (
-        "> 💰 **Premium Price**:\n\n Starting from $2 or 200 INR accepted via **__Amazon Gift Card__** (terms and conditions apply).\n"
-        "📥 **Download Limit**: Users can download up to 100,000 files in a single batch command.\n"
-        "🛑 **Batch**: You will get two modes /bulk and /batch.\n"
-        "   - Users are advised to wait for the process to automatically cancel before proceeding with any downloads or uploads.\n\n"
-        "📜 **Terms and Conditions**: For further details and complete terms and conditions, please send /terms.\n"
-)
+        "> 💳 **__Premium Plan__**\n"
+        "__Our Plan Start from 2$ to 200₹ and can be accepted via Google Pay, PhonePe or PayPal. ( Terms & Conditions applied )__\n\n"
+        "> 📥 **__Download Limit__**\n"
+        "__Users can download up to 10,000 files in a single batch command.__\n\n"
+        "> 📦 **__Batch Command__**\n"
+        "__You will get /batch command unlocked for your bulk files extraction.__\n\n"
+        "> ⏺️ **__Keep Patience__**\n"
+        "__Users are advised to wait for the process to automatically cancel before proceeding with any downloads or uploads.__\n\n"
+        "📜 **__Terms & Conditions__**\n"
+        "__For further details and to read our terms and conditions, send /terms or click See Terms below ⬇️__\n"
