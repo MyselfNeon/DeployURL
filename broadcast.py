@@ -1,14 +1,7 @@
-terms_text = (
-        "> 📜 **Terms & Conditions**\n\n"
-        "> **__01. User Responsibility__**\n"
-        "• __Users Are Solely Responsible For Their Actions And Content. The Service Does Not Promote Or Support Copyrighted Or Illegal Activity.__\n\n"
-        "> **__02. Service Availability__**\n"
-        "• __Purchase Of Any Plan Does Not Guarantee Service Availability, Uptime, Or Continuity. The Service May Be Modified Or Discontinued At Any Time Without Notice.__\n\n"
-        "> **__03. Authorization & Access Control__**\n"
-        "• __User Access, Authorization, Or Banning Is Entirely At The Service Provider’s Discretion.__\n\n"
-        "> **__04. Payments & Feature Access__**\n"
-        "• __Payment Does Not Guarantee Access To Any Feature, Including The /Batch Command.__\n\n"
-        "> **__05. No Right of Claim__**\n"
-        "• __No Refunds, Compensation, Or Claims May Be Made For Denied Access, Service Interruptions, Or Account Restrictions.__\n\n"
+plan_text = (
+        "> 💰 **Premium Price**:\n\n Starting from $2 or 200 INR accepted via **__Amazon Gift Card__** (terms and conditions apply).\n"
+        "📥 **Download Limit**: Users can download up to 100,000 files in a single batch command.\n"
+        "🛑 **Batch**: You will get two modes /bulk and /batch.\n"
+        "   - Users are advised to wait for the process to automatically cancel before proceeding with any downloads or uploads.\n\n"
+        "📜 **Terms and Conditions**: For further details and complete terms and conditions, please send /terms.\n"
 )
-
