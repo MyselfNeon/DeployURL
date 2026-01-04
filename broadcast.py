@@ -154,7 +154,7 @@ async def give_premium_cmd_handler(client, message):
             f"⏰ **__Premium Access:** {duration_str}__\n\n"
             f"⏳ **__Joining Date:** {joining_time}__\n\n"
             f"⌛️ **__Expiry Date:** {expiry_str}__ \n\n"
-            f"__**Powered by @NeonFiles__**",
+            f"> __**Powered by @NeonFiles__**",
             disable_web_page_preview=True
         )
 
@@ -162,22 +162,21 @@ async def give_premium_cmd_handler(client, message):
         await client.send_message(
             chat_id=user_id,
             text=(
-                f"👋 ʜᴇʏ {user.mention},\n"
-                f"ᴛʜᴀɴᴋ ʏᴏᴜ ꜰᴏʀ ᴘᴜʀᴄʜᴀꜱɪɴɢ ᴘʀᴇᴍɪᴜᴍ.\n"
-                f"ᴇɴᴊᴏʏ !! ✨🎉\n\n"
-                f"⏰ ᴘʀᴇᴍɪᴜᴍ ᴀᴄᴄᴇꜱꜱ : <code>{duration_str}</code>\n"
-                f"⏳ ᴊᴏɪɴɪɴɢ ᴅᴀᴛᴇ : {joining_time}\n\n"
-                f"⌛️ ᴇxᴘɪʀʏ ᴅᴀᴛᴇ : {expiry_str}"
+                f"👋 **__Hey {user.mention},__**\n"
+                f"**__Thankyou for purchasing Premium.__**\n"
+                f"**__Enjoy !! 🎉__**\n\n"
+                f"⏰ **__Premium Access:** {duration_str}__\n"
+                f"⏳ **__Joining Date:** {joining_time}__\n\n"
+                f"⌛️ **__Expiry Date:** {expiry_str}__"
             ),
             disable_web_page_preview=True
-        )
-    else:
-        await message.reply_text("Invalid time format. Please use '1 day for days', '1 hour for hours', or '1 min for minutes', or '1 month for months' or '1 year for year'")
+        You   else:
+        await message.reply_text("__Invalid time format. Please use '1 day for days', '1 hour for hours', or '1 min for minutes', or '1 month for months' or '1 year for year'__")
 
 @app.on_message(filters.command("transfer"))
 async def transfer_premium(client, message):
     if len(message.command) != 2:
-        await message.reply_text("⚠️ **Usage:** /transfer user_id\n\nReplace `user_id` with the new user's ID.")
+        await message.reply_text("⚠️ **__Usage:** /transfer user_id __\n\n__Replace `user_id` with the new user's ID.__")
         return
 
     new_user_id = int(message.command[1])
@@ -197,32 +196,32 @@ async def transfer_premium(client, message):
         await plans_db.add_premium(new_user_id, expiry)
 
         # Formatting
-        expiry_str = expiry.astimezone(IST).strftime("%d-%m-%Y\n⏱️ **Expiry Time:** %I:%M:%S %p")
-        transfer_time = get_ist_time().strftime("%d-%m-%Y\n⏱️ **Transfer Time:** %I:%M:%S %p")
+        expiry_str = expiry.astimezone(IST).strftime("%d-%m-%Y\n⏱️ **__Expiry Time:__** %I:%M:%S %p")
+        transfer_time = get_ist_time().strftime("%d-%m-%Y\n⏱️ **__Transfer Time:__** %I:%M:%S %p")
 
         # Confirmation to sender
         await message.reply_text(
-            f"✅ **Premium Plan Transferred Successfully!**\n\n"
-            f"👤 **From:** {sender_user.mention}\n"
-            f"👤 **To:** {new_user.mention}\n"
-            f"⏳ **Expiry Date:** {expiry_str}\n\n"
-            f"__Powered by Team SPY__ 🚀"
+            f"✅ **__Premium Plan Transferred Successfully!__**\n\n"
+            f"👤 **__From:** {sender_user.mention}__\n"
+            f"👤 **__To:** {new_user.mention}__\n"
+            f"⏳ **__Expiry Date:** {expiry_str}__\n\n"
+            f"> **__Powered by @NeonFiles__**"
         )
 
         # Notification to new user
         await client.send_message(
             chat_id=new_user_id,
             text=(
-                f"👋 **Hey {new_user.mention},**\n\n"
-                f"🎉 **Your Premium Plan has been Transferred!**\n"
-                f"🛡️ **Transferred From:** {sender_user.mention}\n\n"
-                f"⏳ **Expiry Date:** {expiry_str}\n"
-                f"📅 **Transferred On:** {transfer_time}\n\n"
-                f"__Enjoy the Service!__ ✨"
+                f"👋 **__Hey {new_user.mention},__**\n\n"
+                f"🎉 **__Your Premium Plan has been Transferred!__**\n"
+                f"🛡️ **__Transferred From:** {sender_user.mention}__\n\n"
+                f"⏳ **__Expiry Date:** {expiry_str}__\n"
+                f"📅 **__Transferred On:** {transfer_time}__\n\n"
+                f"**__Enjoy the Service!__** ✨"
             )
         )
     else:
-        await message.reply_text("⚠️ **You are not a Premium user!**\n\nOnly Premium users can transfer their plans.")
+        await message.reply_text("⚠️ **__You are not a Premium user!__**\n\n__Only Premium users can transfer their plans.__")
 
 async def premium_remover():
     all_users = await plans_db.premium_users()
@@ -278,8 +277,8 @@ async def refresh_users(_, message):
     not_removed_text = "\n".join(not_removed_users) if not_removed_users else "No users remaining with premium."
     
     summary = (
-        f"**Here is the Summary...**\n\n"
-        f"> **Removed Users:**\n{removed_text}\n\n"
-        f"> **Not Removed Users:**\n{not_removed_text}"
+        f"**__Here is the Summary...__**\n\n"
+        f"> **__Removed Users:__**\n{removed_text}\n\n"
+        f"> **__Not Removed Users:__**\n{not_removed_text}"
     )
     await message.reply(summary)
