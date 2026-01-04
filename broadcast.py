@@ -7,5 +7,5 @@ plan_text = (
         "__You will get /batch command unlocked for your bulk files extraction.__\n\n"
         "> ⏺️ **__Keep Patience__**\n"
         "__Users are advised to wait for the process to automatically cancel before proceeding with any downloads or uploads.__\n\n"
-        "📜 **__Terms & Conditions__**\n"
+        "> 📜 **__Terms & Conditions__**\n"
         "__For further details and to read our terms and conditions, send /terms or click See Terms below ⬇️__\n"
