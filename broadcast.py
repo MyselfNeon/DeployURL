@@ -1,8 +1,14 @@
 terms_text = (
         "> 📜 **Terms & Conditions**\n\n"
-        "• __Users are solely responsible for their actions and content. The service does not promote or support copyrighted or illegal activity.__\n"
-        "• __Purchase of any plan does not guarantee service availability, uptime, or continuity. The service may be modified or discontinued at any time without notice.__\n"
-        "• __User access, authorization, or banning is entirely at the service provider’s discretion.__\n"
-        "• __Payment does not guarantee access to any feature, including the /batch command.__\n"
-        "• __No refunds, compensation, or claims may be made for denied access, service interruptions, or account restrictions.__\n"
-    )
+        "> **__User Responsibility__**\n"
+        "• __Users Are Solely Responsible For Their Actions And Content. The Service Does Not Promote Or Support Copyrighted Or Illegal Activity.__\n\n"
+        "> **__Service Availability__**\n"
+        "• __Purchase Of Any Plan Does Not Guarantee Service Availability, Uptime, Or Continuity. The Service May Be Modified Or Discontinued At Any Time Without Notice.__\n\n"
+        "> **__Authorization & Access Control__**\n"
+        "• __User Access, Authorization, Or Banning Is Entirely At The Service Provider’s Discretion.__\n\n"
+        "> **__Payments & Feature Access__**\n"
+        "• __Payment Does Not Guarantee Access To Any Feature, Including The /Batch Command.__\n\n"
+        "> **__No Right of Claim__**\n"
+        "• __No Refunds, Compensation, Or Claims May Be Made For Denied Access, Service Interruptions, Or Account Restrictions.__\n\n"
+)
+
