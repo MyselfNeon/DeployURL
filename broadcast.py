@@ -83,11 +83,11 @@ async def myplan(client, message):
         time_left_str = calculate_time_left(expiry)
 
         await message.reply_text(
-            f"⚜️ **__Premium User Data :__**\n\n"
-            f"👤 **__User :** {user_mention}__\n"
-            f"⚡ **__User ID :** `{user_id}`__\n"
-            f"⏰ **__Time Left :** {time_left_str}__\n"
-            f"⌛️ **__Expiry Date :** {expiry_str}__"
+            f"⚜️ **__Premium User Data:__**\n\n"
+            f"👤 **__User:** {user_mention}__\n"
+            f"⚡ **__User ID:** `{user_id}`__\n"
+            f"⏰ **__Time Left:** {time_left_str}__\n"
+            f"⌛️ **__Expiry Date:** {expiry_str}__"
         )
     else:
         await message.reply_text(f"__Hey {user_mention}__,\n\n__You do not have any active Premium plans__")
@@ -116,22 +116,22 @@ async def get_premium(client, message):
         english_time_left = f"{days} days, {hours} hours, {minutes} minutes"
 
         await message.reply_text(
-            f"⚜️ ᴘʀᴇᴍɪᴜᴍ ᴜꜱᴇʀ ᴅᴀᴛᴀ :\n\n"
-            f"👤 ᴜꜱᴇʀ : {user.mention}\n"
-            f"⚡ ᴜꜱᴇʀ ɪᴅ : <code>{user_id}</code>\n"
-            f"⏰ ᴛɪᴍᴇ ʟᴇꜰᴛ : {english_time_left}\n"
-            f"⌛️ ᴇxᴘɪʀʏ ᴅᴀᴛᴇ : {expiry_str}"
+            f"⚜️ **__Premium User Data:__**\n\n"
+            f"👤 **__User:** {user.mention}__\n"
+            f"⚡ **__User ID:** `{user_id}`__\n"
+            f"⏰ **__Time Left:** {english_time_left}__\n"
+            f"⌛️ **__Expiry Date:** {expiry_str}__"
         )
     else:
-        await message.reply_text("ɴᴏ ᴀɴʏ ᴘʀᴇᴍɪᴜᴍ ᴅᴀᴛᴀ ᴏꜰ ᴛʜᴇ ᴡᴀꜱ ꜰᴏᴜɴᴅ ɪɴ ᴅᴀᴛᴀʙᴀꜱᴇ !")
+        await message.reply_text("__No data found in the Database !__")
 
 @app.on_message(filters.command("add") & filters.user(OWNER_ID))
 async def give_premium_cmd_handler(client, message):
     if len(message.command) != 4:
-        await message.reply_text("Usage : /add user_id time (e.g., '1 day for days', '1 hour for hours', or '1 min for minutes', or '1 month for months' or '1 year for year')")
+        await message.reply_text("**__Usage :** /add user_id time (e.g., '1 day for days', '1 hour for hours', or '1 min for minutes', or '1 month for months' or '1 year for year')__")
         return
 
-    joining_time = get_ist_time().strftime("%d-%m-%Y\n⏱️ ᴊᴏɪɴɪɴɢ ᴛɪᴍᴇ : %I:%M:%S %p")
+    joining_time = get_ist_time().strftime("%d-%m-%Y\n⏱️ Joining Time : %I:%M:%S %p")
     user_id = int(message.command[1])
     user = await client.get_users(user_id)
     duration_str = message.command[2] + " " + message.command[3]
@@ -148,13 +148,13 @@ async def give_premium_cmd_handler(client, message):
 
         # Admin confirmation
         await message.reply_text(
-            f"ᴘʀᴇᴍɪᴜᴍ ᴀᴅᴅᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ✅\n\n"
-            f"👤 ᴜꜱᴇʀ : {user.mention}\n"
-            f"⚡ ᴜꜱᴇʀ ɪᴅ : <code>{user_id}</code>\n"
-            f"⏰ ᴘʀᴇᴍɪᴜᴍ ᴀᴄᴄᴇꜱꜱ : <code>{duration_str}</code>\n\n"
-            f"⏳ ᴊᴏɪɴɪɴɢ ᴅᴀᴛᴇ : {joining_time}\n\n"
-            f"⌛️ ᴇxᴘɪʀʏ ᴅᴀᴛᴇ : {expiry_str} \n\n"
-            f"__**Powered by Team SPY__**",
+            f"**__Premium Added Successfully ✅__**\n\n"
+            f"👤 **__User:** {user.mention}__\n"
+            f"⚡ **__User ID:** `{user_id}`__\n"
+            f"⏰ **__Premium Access:** {duration_str}__\n\n"
+            f"⏳ **__Joining Date:** {joining_time}__\n\n"
+            f"⌛️ **__Expiry Date:** {expiry_str}__ \n\n"
+            f"__**Powered by @NeonFiles__**",
             disable_web_page_preview=True
         )
 
