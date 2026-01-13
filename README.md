@@ -9,7 +9,7 @@
 - *User Online/Offline tracking with IST Time conversion*
 - *New forum thread detection & removed thread alerts*
 - *Advanced Anti-Detection (Browser Impersonation & Random Delays)*
-- *Auto-Healing (Detects 403 blocks and cools down)*
+- *Auto-Healing for Errors*
 - *Full Admin Management via Telegram (Add/Remove targets dynamically)*
 - *MongoDB Database support for persistent state tracking*
 - *Manual `/check` command with instant snapshot reporting*
