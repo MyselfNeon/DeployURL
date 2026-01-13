@@ -11,7 +11,7 @@
 - *Advanced Anti-Detection (Browser Impersonation & Random Delays)*
 - *Auto-Healing (Detects 403 blocks and cools down)*
 - *Full Admin Management via Telegram (Add/Remove targets dynamically)*
-- *MongoDB Database support with 7-day activity history*
+- *MongoDB Database support for persistent state tracking*
 - *Manual `/check` command with instant snapshot reporting*
 - *Flask Web Server with custom Neon HTML Health Check*
 
@@ -43,7 +43,7 @@
 ### 🚀 *Installation*
 
 ```bash
-git clone https://github.com/MyselfNeon/Platinmods
+git clone [https://github.com/MyselfNeon/Platinmods](https://github.com/MyselfNeon/Platinmods)
 cd Platinmods
 pip install -r requirements.txt
 ```
