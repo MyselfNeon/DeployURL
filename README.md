@@ -1,6 +1,6 @@
 ## *Website Monitor Bot* 🌐
 
-*A fully automated, stealthy monitoring bot for Websites built using Pyrogram, curl_cffi (Browser Impersonation), MongoDB (Motor), Flask, and asynchronous scraping with BeautifulSoup.*
+*A fully automated, stealthy monitoring bot for Websites built using Pyrogram curl_cffi (Browser Impersonation), MongoDB (Motor), Flask, and asynchronous scraping with BeautifulSoup.*
 
 ---
 
