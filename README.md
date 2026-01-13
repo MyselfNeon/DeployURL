@@ -6,7 +6,7 @@
 
 ### ✨ *Features*
 
-- *User Online/Offline tracking with IST Time conversion*
+- *User Online/Offline tracking*
 - *New forum thread detection & removed thread alerts*
 - *Advanced Anti-Detection (Browser Impersonation & Random Delays)*
 - *Auto-Healing for Errors*
