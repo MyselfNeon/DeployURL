@@ -83,6 +83,13 @@ python main.py
 
 ### 🧪 *Commands*
 
+```
+start - Check if Bot is Alive
+generate - Generate a String Session
+broadcast - Broadcast a Message to all Bot Users (Owner Only)
+```
+***Copy all Commands ans set it manually inside [Botfather](https://t.me/Botfather) or use [/setcmd](https://t.me/MyselfNeon) after deploy to set commnds Automatically***
+
 ***User Commands:***
 **- `/start` *Check Bot Status & Get your ID.***
 **- `/check` *Force a manual scan & get system summary.***
