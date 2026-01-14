@@ -30,13 +30,13 @@
 
 ### 🧩 *How It Works*
 
-*The bot continuously:* 
-*1. Rotates Browser Fingerprints (Chrome/Safari/Edge) using `curl_cffi`* 
-*2. Fetches URLs with randomized delays to mimic human behavior*
-*3. Compares live data against MongoDB states* 
-*4. Detects user status changes, 403 blocks, or new threads*
-*5. Sends Telegram alerts with instant visual feedback* 
-*6. Runs a background Flask server for uptime monitoring*
+*The bot continuously:*  
+***1.** Rotates Browser Fingerprints (Chrome/Safari/Edge) using `curl_cffi`*  
+***2.** Fetches URLs with randomized delays to mimic human behavior*  
+***3.** Compares live data against MongoDB states*  
+***4.** Detects user status changes, 403 blocks, or new threads*  
+***5.** Sends Telegram alerts with instant visual feedback*  
+***6.** Runs a background Flask server for uptime monitoring*  
 
 ---
 
