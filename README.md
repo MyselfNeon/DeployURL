@@ -55,11 +55,11 @@ pip install -r requirements.txt
 
 <details><summary><b>Variables</summary></b></summary>
 
-* [`API_ID`] - _**From  <a href='https://my.telegram.org/'>Here**_</a>
-* [`API_HASH`] - _**From <a href='https://my.telegram.org/'>Here**_</a>
+* [`API_ID`] - _**From  <a href='https://my.telegram.org/'>TG Auth**_</a>
+* [`API_HASH`] - _**From <a href='https://my.telegram.org/'>TG Auth**_</a>
 * [`BOT_TOKEN`] - _**From <a href='https://t.me/botfather'>BotFather**_</a>
 * [`OWNER_ID`] - **_ID of Admin._**
-* [`DB_URI`] - _**Give Your<a href='https://cloud.mongodb.com/'> MongoDB Url**_</a> **_Here_** 
+* [`DB_URI`] - _**Give Your<a href='https://cloud.mongodb.com/'> MongoDB Url**_
 </details>
 
 ---
