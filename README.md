@@ -84,25 +84,18 @@ python main.py
 ### 🧪 *Commands*
 
 ```
-start - Check Bot status and user ID
-generate - Generate a String Session
-broadcast - Broadcast a Message to all Bot Users (Owner Only)
+start - Check Bot status and get ID
+check - Force a Manual scan
+add_user - Add user to track
+del_user - Remove User from Tracking
+add_forum - Add forum to track
+del_forum - Remove forum from Tracking
+auth - Authorize a user
+unauth - Revoke user
+list - Show current config
+restart - Restart bot servers
 ```
 ***Copy all Commands and set it manually inside [Botfather](https://t.me/Botfather) or use `/setcmd` after deploy to set commands Automatically***
-
-***User Commands:***
-**- `/start` *Check Bot Status & Get your ID.***
-**- `/check` *Force a manual scan & get system summary.***
-
-***Admin Management (Owner Only):***
-**- `/add_user <Name> <URL>` *Add a user to track.***
-**- `/del_user <Name>` *Remove a user from tracking.***
-**- `/add_forum <Name> <URL>` *Add a forum section to track.***
-**- `/del_forum <Name>` *Remove a forum section.***
-**- `/auth <ID>` *Authorize a user to receive alerts.***
-**- `/unauth <ID>` *Revoke authorization.***
-**- `/list` *Show current configuration & targets.***
-**- `/restart` *Remotely restart the bot server.***
 
 ---
 
