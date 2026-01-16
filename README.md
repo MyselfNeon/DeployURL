@@ -52,24 +52,14 @@ pip install -r requirements.txt
 
 ### ⚙️ *Configuration (.env)*
 
-*Create a `.env` file with the following:*
+<details><summary><b>Variables</summary></b></summary>
 
-```python
-API_ID = 123456
-API_HASH = "your_telegram_hash"
-BOT_TOKEN = "your_bot_token"
-
-# Database
-DB_URI = "mongodb+srv://..."
-DB_NAME = "PMT-Testing"
-
-# Owner Configuration (Comma separated IDs)
-OWNER_ID = "841851780,7430064956"
-
-# Tuning
-MIN_CHECK_INTERVAL = 10
-MAX_CHECK_INTERVAL = 20
-```
+* [`API_ID`] - _**From  <a href='https://my.telegram.org/'>Telegram Auth**_</a>
+* [`API_HASH`] - _**From <a href='https://my.telegram.org/'>Telegram Auth**_</a>
+* [`BOT_TOKEN`] - _**From <a href='https://t.me/botfather'>BotFather**_</a>
+* [`OWNER_ID`] - **_ID of Admin._**
+* [`MONGO_DB_URI`] - _**Give Your<a href='https://cloud.mongodb.com/'> MongoDB Url**_</a> **_Here_** 
+</details>
 
 ---
 
