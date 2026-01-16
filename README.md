@@ -53,7 +53,7 @@ pip install -r requirements.txt
 
 ### ⚙️ *Configuration (.env)*
 
-<details><summary><b>Variables</summary></b></summary>
+<details><summary><b><i>Create a .env file with the following:</i></b></summary></summary>
 
 * [`API_ID`] - _**From  <a href='https://my.telegram.org/'>TG Auth**_</a>
 * [`API_HASH`] - _**From <a href='https://my.telegram.org/'>TG Auth**_</a>
