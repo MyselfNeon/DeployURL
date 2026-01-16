@@ -12,6 +12,7 @@
 - *Auto-Healing for notmal Errors*
 - *Full Admin Management via Telegram (Add/Remove targets dynamically)*
 - *MongoDB Database support for persistent state tracking*
+- *In memory to avoid duplicate alerts.*
 - *Manual `/check` command with instant snapshot reporting*
 - *Flask Web Server with custom Neon HTML Health Check*
 
@@ -54,11 +55,11 @@ pip install -r requirements.txt
 
 <details><summary><b>Variables</summary></b></summary>
 
-* [`API_ID`] - _**From  <a href='https://my.telegram.org/'>Telegram Auth**_</a>
-* [`API_HASH`] - _**From <a href='https://my.telegram.org/'>Telegram Auth**_</a>
+* [`API_ID`] - _**From  <a href='https://my.telegram.org/'>Here**_</a>
+* [`API_HASH`] - _**From <a href='https://my.telegram.org/'>Here**_</a>
 * [`BOT_TOKEN`] - _**From <a href='https://t.me/botfather'>BotFather**_</a>
 * [`OWNER_ID`] - **_ID of Admin._**
-* [`MONGO_DB_URI`] - _**Give Your<a href='https://cloud.mongodb.com/'> MongoDB Url**_</a> **_Here_** 
+* [`DB_URI`] - _**Give Your<a href='https://cloud.mongodb.com/'> MongoDB Url**_</a> **_Here_** 
 </details>
 
 ---
