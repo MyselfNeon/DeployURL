@@ -9,7 +9,7 @@
 - *User Online/Offline tracking*
 - *New forum thread detection & removed thread alerts*
 - *Advanced Anti-Detection (Browser Impersonation & Random Delays)*
-- *Auto-Healing for Errors*
+- *Auto-Healing for notmal Errors*
 - *Full Admin Management via Telegram (Add/Remove targets dynamically)*
 - *MongoDB Database support for persistent state tracking*
 - *Manual `/check` command with instant snapshot reporting*
