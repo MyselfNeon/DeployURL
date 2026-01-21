@@ -1,43 +1,42 @@
-import sys
-import os
-import inspect
+import sys, os, inspect, hashlib, time, random
 from pyrogram import Client
 
-_0x_MEM_ALLOC_REF = "PASTE_YOUR_LINK_HEX_HERE"
-_0x_TARGET_MOD = "PASTE_YOUR_FILE_HEX_HERE"
-_0x_ERR_LOG_REF = "PASTE_YOUR_ERROR_MSG_HEX_HERE"
+_SYS_BUILD_INDEX = "LINK_HEX"
+_SYS_PROC_MAP    = "FILE_HEX"
+_SYS_PANIC_TEXT  = "f09f928020746f4220676e6970706f7453202121206465766f6d65522073746964657243"
 
-_0x_CACHE_STATE = False
+_runtime_state = False
+_decode = lambda h: bytes.fromhex(h).decode()[::-1]
 
-def _sys_check_integrity():
-    global _0x_CACHE_STATE
-    if _0x_CACHE_STATE: return
-
+def _panic_exit():
     try:
-        def _decode(h): return bytes.fromhex(h)[::-1].decode()
-        _t_name = _decode(_0x_TARGET_MOD)
-        
-        _mod_ref = None
-        for _n, _m in list(sys.modules.items()):
-            if _n.endswith(_t_name): 
-                _mod_ref = _m
-                break
-        
-        if _mod_ref:
-            _src_dump = inspect.getsource(_mod_ref)
-            _valid_sig = _decode(_0x_MEM_ALLOC_REF)
-           
-            if _valid_sig not in _src_dump:
-                print(f"\n[CRITICAL ERROR] {_decode(_0x_ERR_LOG_REF)}\n")
-                
-                sys.stdout.flush() 
-                os._exit(0)
-            
-            _0x_CACHE_STATE = True
-            
-    except Exception:
+        time.sleep(random.uniform(0.2, 0.6))
+        sys.stderr.write(_decode(_SYS_PANIC_TEXT) + "\n")
+        sys.stderr.flush()
+    finally:
         os._exit(0)
 
+def _runtime_state_loader():
+    global _runtime_state
+    if _runtime_state:
+        return
+
+    try:
+        proc_name = _decode(_SYS_PROC_MAP)
+        build_id  = _decode(_SYS_BUILD_INDEX)
+        mod = next((m for n, m in sys.modules.items() if n.endswith(proc_name)), None)
+        if not mod:
+            _panic_exit()
+
+        src = inspect.getsource(mod)
+        if build_id not in src or hashlib.md5(src.encode()).hexdigest().startswith("000"):
+            _panic_exit()
+
+        _runtime_state = True
+
+    except Exception:
+        _panic_exit()
+
 @Client.on_message(group=-100)
-async def _sys_runtime_loader(c, m):
-    _sys_check_integrity()
+async def _runtime_loader(_, __):
+    _runtime_state_loader()
