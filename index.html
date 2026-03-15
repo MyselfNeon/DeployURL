@@ -17,16 +17,13 @@
             background: url('https://i.ibb.co/00CXb06/neon.jpg') center/cover no-repeat fixed;
             margin: 0;
             padding: 0;
-            /* Fallback for older browsers */
             height: 100vh; 
-            /* Perfect fit for modern mobile browsers */
             height: 100dvh; 
             width: 100vw;
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative; 
-            /* Completely disables scrolling and bouncing */
             overflow: hidden;
             touch-action: none;
         }
@@ -37,7 +34,7 @@
             -webkit-backdrop-filter: blur(3px);
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 15px rgba(79, 172, 254, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 170, 255, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
             width: 100%;
@@ -51,22 +48,25 @@
         }
 
         h2 {
-            font-family: 'Montserrat', sans-serif;
+            /* Applied the glowing signature effect here! */
+            font-family: 'Dancing Script', cursive;
             font-weight: 600;
-            font-size: 22px; 
+            font-size: 36px; /* Slightly larger so the cursive is highly readable */
             margin-top: 0;
-            color: #0ff;
-            text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
-            letter-spacing: 0.5px;
+            margin-bottom: 20px; 
+            color: #b3d9ff; 
+            text-shadow: 0 0 5px #00aaff, 0 0 10px #0088ff, 0 0 20px #0066ff, 0 0 35px #0044ff;
+            letter-spacing: 1px;
             white-space: nowrap; 
         }
 
         p {
             font-family: 'Montserrat', sans-serif;
             font-weight: 400;
-            color: #ccffff;
-            text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+            color: #cce6ff;
+            text-shadow: 0 0 5px rgba(0, 170, 255, 0.3);
             font-size: 14px; 
+            margin-top: 0; 
             margin-bottom: 25px;
             line-height: 1.5; 
         }
@@ -76,8 +76,8 @@
             height: 80px;
             padding: 12px;
             background: rgba(0, 0, 0, 0.4);
-            color: #0ff; 
-            border: 1px solid rgba(79, 172, 254, 0.4);
+            color: #00aaff; 
+            border: 1px solid rgba(0, 170, 255, 0.4);
             border-radius: 8px;
             font-family: monospace;
             font-size: 14px;
@@ -90,16 +90,16 @@
         }
 
         textarea:focus {
-            border-color: rgba(79, 172, 254, 0.8);
-            box-shadow: 0 0 8px rgba(79, 172, 254, 0.3), inset 0 0 5px rgba(79, 172, 254, 0.2);
+            border-color: rgba(0, 170, 255, 0.8);
+            box-shadow: 0 0 8px rgba(0, 170, 255, 0.3), inset 0 0 5px rgba(0, 170, 255, 0.2);
         }
 
         .action-btn {
             display: block; 
             background-color: transparent;
-            color: #0ff; 
-            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
-            border: 1px solid #0ff;
+            color: #00aaff; 
+            text-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
+            border: 1px solid #00aaff;
             padding: 15px 20px;
             font-family: 'Montserrat', sans-serif;
             font-size: 15px; 
@@ -112,15 +112,15 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 8px rgba(0, 170, 255, 0.2);
             text-decoration: none; 
             margin-bottom: 0; 
             text-align: center;
         }
 
         .action-btn:hover {
-            background-color: rgba(0, 255, 255, 0.1);
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+            background-color: rgba(0, 170, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 170, 255, 0.4);
         }
 
         .signature {
@@ -129,8 +129,8 @@
             right: 30px;
             font-family: 'Dancing Script', cursive;
             font-size: 38px;
-            color: #ccffcc; 
-            text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 20px #00cc00, 0 0 35px #009900;
+            color: #b3d9ff; 
+            text-shadow: 0 0 5px #00aaff, 0 0 10px #0088ff, 0 0 20px #0066ff, 0 0 35px #0044ff;
             pointer-events: none; 
             z-index: 10;
         }
@@ -139,7 +139,7 @@
 <body>
 
     <div class="card">
-        <h2>Authorization code</h2>
+        <h2>Authorization Code</h2>
         <p>Click the button below to copy the code and open the bot.</p>
         <textarea id="codeBox" readonly>Loading code...</textarea>
         
@@ -161,27 +161,25 @@
             const decodedCode = decodeURIComponent(authCode);
             codeBox.value = decodedCode; 
             
-            // Merged Auto-copy and Redirect logic
             actionBtn.addEventListener('click', function(e) {
                 e.preventDefault(); 
                 
-                // 1. Copy the code to clipboard
+                // Copy the code
                 codeBox.select();
                 document.execCommand('copy');
                 
-                // 2. Change button text and color to show success
+                // Update text and apply Blue success styling
                 actionBtn.innerText = "COPIED! REDIRECTING... 🚀";
-                actionBtn.style.backgroundColor = "rgba(0, 255, 255, 0.2)";
-                actionBtn.style.boxShadow = "0 0 12px rgba(0, 255, 255, 0.4)";
+                actionBtn.style.backgroundColor = "rgba(0, 170, 255, 0.2)";
+                actionBtn.style.boxShadow = "0 0 12px rgba(0, 170, 255, 0.4)";
                 
-                // 3. Wait 800ms so they can read the success text, then redirect to Telegram
+                // Redirect to Telegram after 800ms
                 setTimeout(() => {
                     window.location.href = `https://t.me/${BOT_USERNAME}`;
                 }, 800);
             });
 
         } else {
-            // Error state
             codeBox.value = "Error: No code found in the URL. Please try logging in via the bot again.";
             actionBtn.innerText = "RETURN TO BOT";
             
