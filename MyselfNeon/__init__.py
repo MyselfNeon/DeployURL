@@ -1,3 +1,0 @@
-
-# --- MyselfNeon 🎉 ---
-# --- Telegram/Github = @MyselfNeon ---
