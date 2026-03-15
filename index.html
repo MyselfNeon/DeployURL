@@ -81,7 +81,8 @@
             background-color: transparent;
             color: #0ff; 
             text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
-            border: 1px solid #39ff14;
+            /* Changed to neon cyan/blue to match the UI */
+            border: 1px solid #0ff;
             padding: 15px 20px;
             font-family: 'Montserrat', sans-serif;
             font-size: 15px; 
@@ -94,7 +95,8 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: 0 0 8px rgba(57, 255, 20, 0.2);
+            /* Changed glow to neon cyan/blue */
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
             text-decoration: none; 
             margin-bottom: 15px; 
             text-align: center;
@@ -105,8 +107,9 @@
         }
 
         .action-btn:hover {
-            background-color: rgba(57, 255, 20, 0.1);
-            box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+            /* Changed hover fill to match the cyan/blue theme */
+            background-color: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
         }
 
         .signature {
@@ -115,6 +118,7 @@
             right: 30px;
             font-family: 'Dancing Script', cursive;
             font-size: 38px;
+            /* Kept your signature hacker green so it stands out! */
             color: #ccffcc; 
             text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 20px #00cc00, 0 0 35px #009900;
             pointer-events: none; 
@@ -130,7 +134,7 @@
         <textarea id="codeBox" readonly>Loading code...</textarea>
         
         <button id="copyBtn" class="action-btn" onclick="copyCode()">Copy to clipboard</button>
-        <a id="tgBtn" class="action-btn" href="#">🚀 SEND TO TELEGRAM</a>
+        <a id="tgBtn" class="action-btn" href="#">OPEN TELEGRAM BOT</a>
     </div>
 
     <div class="signature">MyselfNeon</div>
@@ -147,11 +151,22 @@
         if (authCode) {
             const decodedCode = decodeURIComponent(authCode);
             codeBox.value = decodedCode; 
-            tgBtn.href = `https://t.me/${BOT_USERNAME}?text=${encodeURIComponent(decodedCode)}`;
+            
+            // Auto-copy and redirect logic
+            tgBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Stop the link from acting normally
+                
+                // Copy the code to clipboard
+                codeBox.select();
+                document.execCommand('copy');
+                
+                // Redirect them to the bot
+                window.location.href = `https://t.me/${BOT_USERNAME}`;
+            });
+
         } else {
-            // BEHAVES EXACTLY LIKE YOUR ORIGINAL CODE NOW!
             codeBox.value = "Error: No code found in the URL. Please try logging in via the bot again.";
-            tgBtn.href = `https://t.me/${BOT_USERNAME}`; // Just opens the bot normally if clicked
+            tgBtn.href = `https://t.me/${BOT_USERNAME}`;
         }
 
         function copyCode() {
@@ -163,17 +178,18 @@
             const btn = document.getElementById('copyBtn');
             btn.innerText = "Copied! ✅";
             
-            btn.style.backgroundColor = "rgba(57, 255, 20, 0.2)";
+            // Updated success state colors to neon cyan/blue
+            btn.style.backgroundColor = "rgba(0, 255, 255, 0.2)";
             btn.style.color = "#0ff";
-            btn.style.borderColor = "#39ff14";
-            btn.style.boxShadow = "0 0 12px rgba(57, 255, 20, 0.4)";
+            btn.style.borderColor = "#0ff";
+            btn.style.boxShadow = "0 0 12px rgba(0, 255, 255, 0.4)";
             
             setTimeout(() => {
                 btn.innerText = "COPY TO CLIPBOARD";
                 btn.style.backgroundColor = "transparent";
                 btn.style.color = "#0ff";
-                btn.style.borderColor = "#39ff14";
-                btn.style.boxShadow = "0 0 8px rgba(57, 255, 20, 0.2)";
+                btn.style.borderColor = "#0ff";
+                btn.style.boxShadow = "0 0 8px rgba(0, 255, 255, 0.2)";
             }, 2000);
         }
     </script>
