@@ -2,19 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gdrive Authorization</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        /* Locks the HTML block completely */
+        html {
+            overflow: hidden;
+            touch-action: none;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: url('https://i.ibb.co/00CXb06/neon.jpg') center/cover no-repeat fixed;
-            height: 100vh;
             margin: 0;
+            padding: 0;
+            /* Fallback for older browsers */
+            height: 100vh; 
+            /* Perfect fit for modern mobile browsers */
+            height: 100dvh; 
+            width: 100vw;
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative; 
+            /* Completely disables scrolling and bouncing */
+            overflow: hidden;
+            touch-action: none;
         }
         
         .card {
@@ -28,8 +42,13 @@
             text-align: center;
             width: 100%;
             max-width: 400px;
+            /* Prevents the card from ever overflowing the screen vertically */
+            max-height: 95dvh; 
             margin: 0 20px; 
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         h2 {
@@ -81,7 +100,6 @@
             background-color: transparent;
             color: #0ff; 
             text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
-            /* Changed to neon cyan/blue to match the UI */
             border: 1px solid #0ff;
             padding: 15px 20px;
             font-family: 'Montserrat', sans-serif;
@@ -95,7 +113,6 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            /* Changed glow to neon cyan/blue */
             box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
             text-decoration: none; 
             margin-bottom: 15px; 
@@ -107,7 +124,6 @@
         }
 
         .action-btn:hover {
-            /* Changed hover fill to match the cyan/blue theme */
             background-color: rgba(0, 255, 255, 0.1);
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
         }
@@ -118,7 +134,6 @@
             right: 30px;
             font-family: 'Dancing Script', cursive;
             font-size: 38px;
-            /* Kept your signature hacker green so it stands out! */
             color: #ccffcc; 
             text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 20px #00cc00, 0 0 35px #009900;
             pointer-events: none; 
@@ -154,13 +169,11 @@
             
             // Auto-copy and redirect logic
             tgBtn.addEventListener('click', function(e) {
-                e.preventDefault(); // Stop the link from acting normally
+                e.preventDefault(); 
                 
-                // Copy the code to clipboard
                 codeBox.select();
                 document.execCommand('copy');
                 
-                // Redirect them to the bot
                 window.location.href = `https://t.me/${BOT_USERNAME}`;
             });
 
@@ -178,7 +191,6 @@
             const btn = document.getElementById('copyBtn');
             btn.innerText = "Copied! ✅";
             
-            // Updated success state colors to neon cyan/blue
             btn.style.backgroundColor = "rgba(0, 255, 255, 0.2)";
             btn.style.color = "#0ff";
             btn.style.borderColor = "#0ff";
