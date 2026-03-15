@@ -42,7 +42,6 @@
             text-align: center;
             width: 100%;
             max-width: 400px;
-            /* Prevents the card from ever overflowing the screen vertically */
             max-height: 95dvh; 
             margin: 0 20px; 
             box-sizing: border-box;
@@ -115,12 +114,8 @@
             letter-spacing: 1px;
             box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
             text-decoration: none; 
-            margin-bottom: 15px; 
+            margin-bottom: 0; 
             text-align: center;
-        }
-
-        .action-btn:last-child {
-            margin-bottom: 0;
         }
 
         .action-btn:hover {
@@ -145,11 +140,10 @@
 
     <div class="card">
         <h2>Authorization code</h2>
-        <p>Send this code directly to the bot, or copy it manually.</p>
+        <p>Click the button below to copy the code and open the bot.</p>
         <textarea id="codeBox" readonly>Loading code...</textarea>
         
-        <button id="copyBtn" class="action-btn" onclick="copyCode()">Copy to clipboard</button>
-        <a id="tgBtn" class="action-btn" href="#">OPEN TELEGRAM BOT</a>
+        <button id="actionBtn" class="action-btn">COPY & REDIRECT TO BOT</button>
     </div>
 
     <div class="signature">MyselfNeon</div>
@@ -161,48 +155,40 @@
         const urlParams = new URLSearchParams(window.location.search);
         const authCode = urlParams.get('code');
         const codeBox = document.getElementById('codeBox');
-        const tgBtn = document.getElementById('tgBtn');
+        const actionBtn = document.getElementById('actionBtn');
 
         if (authCode) {
             const decodedCode = decodeURIComponent(authCode);
             codeBox.value = decodedCode; 
             
-            // Auto-copy and redirect logic
-            tgBtn.addEventListener('click', function(e) {
+            // Merged Auto-copy and Redirect logic
+            actionBtn.addEventListener('click', function(e) {
                 e.preventDefault(); 
                 
+                // 1. Copy the code to clipboard
                 codeBox.select();
                 document.execCommand('copy');
                 
-                window.location.href = `https://t.me/${BOT_USERNAME}`;
+                // 2. Change button text and color to show success
+                actionBtn.innerText = "COPIED! REDIRECTING... 🚀";
+                actionBtn.style.backgroundColor = "rgba(0, 255, 255, 0.2)";
+                actionBtn.style.boxShadow = "0 0 12px rgba(0, 255, 255, 0.4)";
+                
+                // 3. Wait 800ms so they can read the success text, then redirect to Telegram
+                setTimeout(() => {
+                    window.location.href = `https://t.me/${BOT_USERNAME}`;
+                }, 800);
             });
 
         } else {
+            // Error state
             codeBox.value = "Error: No code found in the URL. Please try logging in via the bot again.";
-            tgBtn.href = `https://t.me/${BOT_USERNAME}`;
-        }
-
-        function copyCode() {
-            if (!authCode) return;
+            actionBtn.innerText = "RETURN TO BOT";
             
-            codeBox.select();
-            document.execCommand('copy');
-            
-            const btn = document.getElementById('copyBtn');
-            btn.innerText = "Copied! ✅";
-            
-            btn.style.backgroundColor = "rgba(0, 255, 255, 0.2)";
-            btn.style.color = "#0ff";
-            btn.style.borderColor = "#0ff";
-            btn.style.boxShadow = "0 0 12px rgba(0, 255, 255, 0.4)";
-            
-            setTimeout(() => {
-                btn.innerText = "COPY TO CLIPBOARD";
-                btn.style.backgroundColor = "transparent";
-                btn.style.color = "#0ff";
-                btn.style.borderColor = "#0ff";
-                btn.style.boxShadow = "0 0 8px rgba(0, 255, 255, 0.2)";
-            }, 2000);
+            actionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = `https://t.me/${BOT_USERNAME}`;
+            });
         }
     </script>
 
