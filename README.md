@@ -37,4 +37,4 @@
 - `VERIFY_CREDITS` - *Amount of credits given per token verification (Default: `10`).*
 
 ### 🏆 *Credits*
-- ***Developer**: [MyselfNeon](https://github.com/MyselfNeon/)*
+- ***Developer : [MyselfNeon](https://github.com/MyselfNeon/)***
