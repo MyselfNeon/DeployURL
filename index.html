@@ -14,7 +14,9 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: url('https://i.ibb.co/00CXb06/neon.jpg') center/cover no-repeat fixed;
+            /* Fallback dark color while the image loads */
+            background-color: #0f0f14; 
+            /* Background image is now set dynamically via JavaScript */
             margin: 0;
             padding: 0;
             height: 100vh; 
@@ -26,6 +28,8 @@
             position: relative; 
             overflow: hidden;
             touch-action: none;
+            /* Smooth transition if images load fast enough */
+            transition: background 0.5s ease-in-out; 
         }
         
         .card {
@@ -48,10 +52,9 @@
         }
 
         h2 {
-            /* Applied the glowing signature effect here! */
             font-family: 'Dancing Script', cursive;
             font-weight: 600;
-            font-size: 36px; /* Slightly larger so the cursive is highly readable */
+            font-size: 36px; 
             margin-top: 0;
             margin-bottom: 20px; 
             color: #b3d9ff; 
@@ -149,7 +152,51 @@
     <div class="signature">MyselfNeon</div>
 
     <script>
-        // 1. CHANGE THIS TO YOUR BOT'S USERNAME (Without the @)
+        // --- BACKGROUND LOGIC ---
+        // Add your direct image links here, separated by a space.
+        // Make sure links end in .jpg, .png, etc., for proper rendering.
+        const imageLinksString = "https://i.ibb.co/00CXb06/neon.jpg https://i.ibb.co/L5hY8gW/another-neon.jpg";
+        
+        // Splits the string by spaces into an array
+        const hardcodedImages = imageLinksString.trim().split(/\s+/);
+
+        function setBackground(imageUrl) {
+            document.body.style.background = `url('${imageUrl}') center/cover no-repeat fixed`;
+        }
+
+        function loadRandomBackground() {
+            // Generate a random number between 0 and 1
+            const rand = Math.random();
+            
+            if (rand < 0.4) {
+                // 40% probability: Pick a random image from the hardcoded string
+                const randomIndex = Math.floor(Math.random() * hardcodedImages.length);
+                setBackground(hardcodedImages[randomIndex]);
+            } else {
+                // 60% probability: Fetch from waifu.pics API (sfw waifu category)
+                fetch('https://api.waifu.pics/sfw/waifu')
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data && data.url) {
+                            setBackground(data.url);
+                        } else {
+                            // Safe fallback if API returns unexpected structure
+                            setBackground(hardcodedImages[0]);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("API Fetch Failed, falling back to hardcoded images:", error);
+                        // Fallback to the first hardcoded image if the API is down
+                        setBackground(hardcodedImages[0]);
+                    });
+            }
+        }
+
+        // Initialize background on page load
+        loadRandomBackground();
+
+
+        // --- AUTHORIZATION LOGIC ---
         const BOT_USERNAME = "NeonGDriveBot";
 
         const urlParams = new URLSearchParams(window.location.search);
