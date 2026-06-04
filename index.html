@@ -23,7 +23,7 @@
         // --- BACKGROUND LOGIC ---
         // Add your direct image links here, separated by a space.
         // Make sure links end in .jpg, .png, etc., for proper rendering.
-        const imageLinksString = "https://i.ibb.co/00CXb06/neon.jpg https://i.ibb.co/9m18wkjw/neon.jpg https://i.ibb.co/rGx816XV/neon.jpg https://i.ibb.co/svG2nP3q/neon.jpg https://i.ibb.co/3mVkMYv2/neon.jpg https://i.ibb.co/RKp34Hd/neon.jpg https://i.ibb.co/v6Nb39zW/neon.jpg https://i.ibb.co/j9DnZNcW/neon.jpg https://i.ibb.co/Y4mTJHX6/neon.jpg https://i.ibb.co/hJckGSYW/neon.jpg https://i.ibb.co/SXdBxXJT/neon.jpg https://i.ibb.co/8L00MQyG/neon.jpg https://i.ibb.co/33n8fYw/neon.jpg";
+        const imageLinksString = "https://i.ibb.co/8L00MQyG/neon.jpg https://i.ibb.co/RKp34Hd/neon.jpg https://i.ibb.co/3mVkMYv2/neon.jpg https://i.ibb.co/00CXb06/neon.jpg";
         
         // Splits the string by spaces into an array
         const hardcodedImages = imageLinksString.trim().split(/\s+/);
@@ -36,26 +36,28 @@
             // Generate a random number between 0 and 1
             const rand = Math.random();
             
-            if (rand < 0.4) {
-                // 40% probability: Pick a random image from the hardcoded string
+            if (rand < 0.25) {
+                // 25% probability: Pick a random image from the hardcoded string
                 const randomIndex = Math.floor(Math.random() * hardcodedImages.length);
                 setBackground(hardcodedImages[randomIndex]);
             } else {
-                // 60% probability: Fetch from waifu.pics API (sfw waifu category)
-                fetch('https://api.waifu.pics/sfw/waifu')
+                // 75% probability: Fetch spicy (ero) images from waifu.im API
+            fetch('https://api.waifu.im/images?IncludedTags=ero')
                     .then(response => response.json())
                     .then(data => {
-                        if(data && data.url) {
-                            setBackground(data.url);
+                        // Using 'items' instead of 'images' based on the new API structure
+                        if(data && data.items && data.items.length > 0) {
+                            setBackground(data.items[0].url);
                         } else {
-                            // Safe fallback if API returns unexpected structure
-                            setBackground(hardcodedImages[0]);
+                            throw new Error("Invalid waifu.im response or empty items array"); 
                         }
                     })
                     .catch(error => {
-                        console.error("API Fetch Failed, falling back to hardcoded images:", error);
-                        // Fallback to the first hardcoded image if the API is down
-                        setBackground(hardcodedImages[0]);
+                        console.error("Waifu.im failed. Falling back to hardcoded images.", error);
+                        
+                        // Fallback: Pick a random image from your hardcoded list if the API fails
+                        const fallbackIndex = Math.floor(Math.random() * hardcodedImages.length);
+                        setBackground(hardcodedImages[fallbackIndex]);
                     });
             }
         }
