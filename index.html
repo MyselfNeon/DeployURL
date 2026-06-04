@@ -42,7 +42,7 @@
                 setBackground(hardcodedImages[randomIndex]);
             } else {
                 // 75% probability: Fetch spicy (ero) images from waifu.im API
-            fetch('https://api.waifu.im/images?IncludedTags=ero')
+            fetch('https://api.waifu.im/images?IncludedTags=ero&IsNsfw=true')
                     .then(response => response.json())
                     .then(data => {
                         // Using 'items' instead of 'images' based on the new API structure
