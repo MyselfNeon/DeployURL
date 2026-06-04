@@ -1,0 +1,131 @@
+/* Locks the HTML block completely */
+html {
+    overflow: hidden;
+    touch-action: none;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Fallback dark color while the image loads */
+    background-color: #0f0f14; 
+    /* Background image is now set dynamically via JavaScript */
+    margin: 0;
+    padding: 0;
+    height: 100vh; 
+    height: 100dvh; 
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative; 
+    overflow: hidden;
+    touch-action: none;
+    /* Smooth transition if images load fast enough */
+    transition: background 0.5s ease-in-out; 
+}
+
+.card {
+    background: rgba(15, 15, 20, 0.75); 
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 170, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+    max-height: 95dvh; 
+    margin: 0 20px; 
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+h2 {
+    font-family: 'Dancing Script', cursive;
+    font-weight: 600;
+    font-size: 36px; 
+    margin-top: 0;
+    margin-bottom: 20px; 
+    color: #b3d9ff; 
+    text-shadow: 0 0 5px #00aaff, 0 0 10px #0088ff, 0 0 20px #0066ff, 0 0 35px #0044ff;
+    letter-spacing: 1px;
+    white-space: nowrap; 
+}
+
+p {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    color: #cce6ff;
+    text-shadow: 0 0 5px rgba(0, 170, 255, 0.3);
+    font-size: 14px; 
+    margin-top: 0; 
+    margin-bottom: 25px;
+    line-height: 1.5; 
+}
+
+textarea {
+    width: 100%;
+    height: 80px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.4);
+    color: #00aaff; 
+    border: 1px solid rgba(0, 170, 255, 0.4);
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 14px;
+    resize: none;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    word-break: break-all;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+textarea:focus {
+    border-color: rgba(0, 170, 255, 0.8);
+    box-shadow: 0 0 8px rgba(0, 170, 255, 0.3), inset 0 0 5px rgba(0, 170, 255, 0.2);
+}
+
+.action-btn {
+    display: block; 
+    background-color: transparent;
+    color: #00aaff; 
+    text-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
+    border: 1px solid #00aaff;
+    padding: 15px 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 15px; 
+    font-weight: 600;
+    border-radius: 25px;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+    white-space: nowrap; 
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 8px rgba(0, 170, 255, 0.2);
+    text-decoration: none; 
+    margin-bottom: 0; 
+    text-align: center;
+}
+
+.action-btn:hover {
+    background-color: rgba(0, 170, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 170, 255, 0.4);
+}
+
+.signature {
+    position: fixed;
+    bottom: 20px;
+    right: 30px;
+    font-family: 'Dancing Script', cursive;
+    font-size: 38px;
+    color: #b3d9ff; 
+    text-shadow: 0 0 5px #00aaff, 0 0 10px #0088ff, 0 0 20px #0066ff, 0 0 35px #0044ff;
+    pointer-events: none; 
+    z-index: 10;
+}
