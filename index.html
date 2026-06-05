@@ -41,8 +41,8 @@
                 const randomIndex = Math.floor(Math.random() * hardcodedImages.length);
                 setBackground(hardcodedImages[randomIndex]);
             } else {
-                // 75% probability: Fetch spicy (ero) images from waifu.im API
-            fetch('https://api.waifu.im/images?IncludedTags=ero&IsNsfw=true')
+                // 75% probability: Fetch normal, safe images from waifu.im API
+            fetch('https://api.waifu.im/images?IncludedTags=waifu')
                     .then(response => response.json())
                     .then(data => {
                         // Using 'items' instead of 'images' based on the new API structure
