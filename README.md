@@ -1,6 +1,6 @@
 ### *GDrive Authorization Redirect 🔐*
 
-*A stylish, responsive authorization page designed for the `@NeonGDriveBot` Telegram bot. This page extracts authentication codes from the URL, presents them securely, and provides a seamless one-click copy and redirect experience back to Telegram.*
+*A stylish, responsive authorization page designed for the `@GoogleDriveXsBot` Telegram bot. This page extracts authentication codes from the URL, presents them securely, and provides a seamless one-click copy and redirect experience back to Telegram.*
 
 ### *✨ Features*
 *- **URL Parameter Extraction:** Automatically fetches the `?code=` query parameter.*  
@@ -13,7 +13,7 @@
 ***01.** A user authenticates via a third-party service (e.g., Google Drive OAuth).*  
 ***02.** The service redirects to this hosted page, appending the auth code: `https://yourdomain.com/?code=4/0AX4Xf...`*  
 ***03.** The JavaScript on this page parses the URL and displays the code.*
-*04. Clicking the **COPY & REDIRECT TO BOT** button copies the code and triggers a window redirect to `https://t.me/NeonGDriveBot`.*
+*04. Clicking the **COPY & REDIRECT TO BOT** button copies the code and triggers a window redirect to `https://t.me/GoogleDriveXsBot`.*
 
 ### 🚀 *Deployment*
 *This project is entirely static (`index.html` and `styles.css`). 
